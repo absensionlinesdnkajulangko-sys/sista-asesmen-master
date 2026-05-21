@@ -367,15 +367,9 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
                       </select>
                     </div>
                   )}
-                  <div className="w-24 space-y-1">
-                    <label className="text-[10px] font-bold text-citrus-600 uppercase">Skor/Soal</label>
-                    <input 
-                      type="number" 
-                      value={config.scorePerItem}
-                      onChange={(e) => updateConfig(idx, { scorePerItem: parseInt(e.target.value) || 0 })}
-                      className={cn(inputClass, "py-2 px-2 text-sm text-center")}
-                    />
-                  </div>
+                  
+                  {/* PERBAIKAN: Input Skor/Soal telah dihapus dari sini */}
+
                   {formData.questionConfigs.length > 1 && (
                     <div className="pt-5">
                       <button type="button" onClick={() => removeConfig(idx)} className="p-2 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
