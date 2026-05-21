@@ -189,8 +189,8 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-32">
-      {/* PERBAIKAN: Menambahkan aturan white-space: nowrap dan padding aman pada class .spreadsheet-table th/td saat dicetak */}
-      <style dangerouslySetInnerHTML={{ __html: `@media print { .no-print, button, header, nav, aside, footer, .sticky { display: none !important; } body, main, #root { background: white !important; padding: 0 !important; margin: 0 !important; width: 100% !important; } table, .spreadsheet-table { width: 100% !important; border-collapse: collapse !important; } .spreadsheet-table th, .spreadsheet-table td { border: 1px solid #000000 !important; padding: 6px !important; font-size: 10pt !important; } .no-wrap-print { white-space: nowrap !important; } }`}} />
+      {/* PERBAIKAN: Menambahkan aturan menghilangkan border luar (.print-container) saat cetak langsung */}
+      <style dangerouslySetInnerHTML={{ __html: `@media print { .no-print, button, header, nav, aside, footer, .sticky { display: none !important; } body, main, #root { background: white !important; padding: 0 !important; margin: 0 !important; width: 100% !important; } .print-container { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; } table, .spreadsheet-table { width: 100% !important; border-collapse: collapse !important; } .spreadsheet-table th, .spreadsheet-table td { border: 1px solid #000000 !important; padding: 6px !important; font-size: 10pt !important; } .no-wrap-print { white-space: nowrap !important; } }`}} />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 no-print bg-white/80 backdrop-blur-md p-4 rounded-[1.5rem] border border-citrus-100 sticky top-4 z-40 shadow-xl shadow-citrus-900/5">
         <button onClick={onBack} className="flex items-center gap-2 text-citrus-700 font-bold hover:text-citrus-900 transition-colors px-4 py-2">
@@ -223,7 +223,8 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
         </div>
       </div>
 
-      <div ref={containerRef} className="bg-white p-8 md:p-12 shadow-2xl border border-slate-200 min-h-[1000px] relative">
+      {/* MENAMBAHKAN CLASS 'print-container' UNTUK DIKONTROL OLEH CSS @media print */}
+      <div ref={containerRef} className="print-container bg-white p-8 md:p-12 shadow-2xl border border-slate-200 min-h-[1000px] relative">
         {/* SKELETON LOADING INDIKATOR OVERLAY */}
         {isTabLoading && (
           <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center space-y-4">
@@ -355,7 +356,6 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
             <div className="overflow-x-auto">
               <table className="spreadsheet-table w-full">
                 <thead>
-                  {/* PERBAIKAN: Memberikan alokasi lebar minimal (w-32) pada th bentuk agar tidak terhimpit */}
                   <tr>
                     <th className="text-center w-12">No</th>
                     <th>Capaian & Tujuan Pembelajaran</th>
@@ -371,7 +371,6 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
                       <td className="text-xs leading-relaxed"><b>CP:</b> <p className="mb-2 italic text-slate-700">{formInput.cp}</p><b>TP:</b> <p className="text-slate-800">{item.tp}</p></td>
                       <td className="text-xs italic text-slate-700">{item.indikatorSoal}</td>
                       <td className="text-center"><span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border">{item.levelKognitif}</span></td>
-                      {/* PERBAIKAN: Menambahkan utilitas "no-wrap-print whitespace-nowrap" agar kata tidak dipatahkan satu per satu huruf */}
                       <td className="text-center w-32 whitespace-nowrap no-wrap-print">
                         <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 border inline-block whitespace-nowrap">
                           {item.bentukSoal}
