@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-// MENAMBAHKAN ICON Clock DI SINI
 import { Plus, Minus, School, User as UserIcon, Briefcase, GraduationCap, Calendar, BookOpen, Layers, Target, ClipboardList, Trash2, AlertTriangle, Clock } from 'lucide-react';
 import { SoalFormData, QuestionType, QuestionConfig } from '../types';
 import { NavItem } from './Sidebar';
@@ -60,8 +59,8 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
       grade: '',
       semester: 'I / Ganjil',
       subject: '',
-      timeAllocation: '', // 1. MENAMBAHKAN STATE DEFAULT UNTUK ALOKASI WAKTU
-      material: [''], // Menggunakan array untuk mendukung multi-materi
+      timeAllocation: '', 
+      material: [''], 
       cp: '',
       withImages: true,
       questionConfigs: [{ type: 'Pilihan Ganda', count: 5, optionCount: 4, scorePerItem: 1 }],
@@ -99,7 +98,7 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
         ...prev,
         grade: '',
         subject: '',
-        timeAllocation: '', // 2. MENAMBAHKAN RESET STATE JIKA MODE BERUBAH
+        timeAllocation: '', 
         material: [''],
         cp: ''
       }));
@@ -116,7 +115,6 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
     }
   };
 
-  // Handler khusus memanipulasi array Materi Pokok
   const handleMaterialChange = (index: number, value: string) => {
     const newMaterials = [...formData.material];
     newMaterials[index] = value;
@@ -252,7 +250,6 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
           </div>
         </div>
         
-        {/* 3. MENGUBAH LAYOUT MATA PELAJARAN MENJADI GRID 2 KOLOM UNTUK MENAMPUNG ALOKASI WAKTU */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <label className={labelClass}><BookOpen className="w-4 h-4"/> Mata Pelajaran</label>
@@ -281,7 +278,6 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <label className={labelClass}><ClipboardList className="w-4 h-4"/> Materi Utama (Materi Pokok)</label>
-            {/* Hanya tampilkan tombol tambah materi jika dalam Mode Sumatif */}
             {isSumatifMode && (
               <button 
                 type="button" 
@@ -305,7 +301,6 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
                     required 
                   />
                 </div>
-                {/* Tombol hapus baris input materi hanya aktif jika jumlah input > 1 dan dalam mode Sumatif */}
                 {isSumatifMode && formData.material.length > 1 && (
                   <button
                     type="button"
