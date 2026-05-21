@@ -40,6 +40,7 @@ app.post("/api/generate", async (req, res) => {
       `${c.count} soal ${c.type} ${c.type === 'Pilihan Ganda' ? `dengan ${c.optionCount} pilihan jawaban` : ''} (Skor/soal: ${c.scorePerItem})`
     ).join(", ");
 
+    // PERBAIKAN UTAMA: Mengubah struktur instruksi prompt agar AI membuat TP secara otomatis dan selaras
     const prompt = `
       Bertindaklah sebagai Pakar Asesmen Kurikulum Merdeka dan Ahli Evaluasi Pendidikan Indonesia. 
       Buatlah instrumen asesmen yang modern dengan standar literasi dan numerasi (AKM).
@@ -47,27 +48,25 @@ app.post("/api/generate", async (req, res) => {
       DATA INPUT:
       - Satuan Pendidikan: ${data.schoolName}
       - Mapel: ${data.subject}
-      - Materi Utama (Input): ${data.material || "AI Tentukan Otomatis"}
+      - Materi Pokok / Utama: ${data.material || "AI Tentukan Otomatis"}
       - Capaian Pembelajaran (CP): ${data.cp}
-      - Daftar Tujuan Pembelajaran (TP):
-        ${data.tp.map((t: string, i: number) => `${i + 1}. ${t}`).join("\n      ")}
       - Kelas/Semester: ${data.grade} / ${data.semester}
       - Tahun Ajaran: ${data.academicYear}
       - Konfigurasi Soal: ${configs}
       - Level Kognitif: ${data.cognitiveLevel.join(", ")}
       - Gunakan Stimulus Gambar: ${data.withImages ? 'YA (Hasilkan deskripsi visual)' : 'TIDAK'}
       
-      TUGAS ANDA:
-      1. Materi Utama: Jika input Materi Utama kosong, buatlah ringkasan materi pokok (2-4 kata) yang paling mewakili daftar TP di atas. Masukkan ke dalam property "header.material" (ini akan digunakan sebagai judul materi pokok di lembar asesmen).
-      2. Distribusi Soal: Sebarkan jumlah soal secara merata atau proporsional ke semua Tujuan Pembelajaran (TP) yang diberikan.
-      3. Stimulus & Soal: 
-         - Pilihan Ganda: WAJIB menyertakan property "options" sebagai array of strings. Pilihan jawaban di dalam array JANGAN menyertakan huruf abjad penanda (Jangan sertakan "A.", "B.", dll), langsung isi teks jawabannya saja. Jumlah pilihan harus ${data.questionConfigs.find((c: any) => c.type === 'Pilihan Ganda')?.optionCount || 4}.
-         - Pilihan Ganda Kompleks: WAJIB memiliki minimal 2 jawaban yang benar di "multiOptions". Berikan instruksi agar siswa memberi centang.
+      TUGAS UTAMA ANDA (OTOMATISASI TUJUAN PEMBELAJARAN):
+      1. Berdasarkan "Materi Pokok" dan "Capaian Pembelajaran (CP)" yang diinputkan di atas, Anda WAJIB merumuskan sendiri daftar Tujuan Pembelajaran (TP) yang logis, terukur, dan sesuai dengan esensi Kurikulum Merdeka.
+      2. Distribusi & Keselarasan: Turunkan setiap nomor soal secara runtut dari TP tersebut. Untuk setiap butir soal di bagian "kisiKisi", pastikan teks properti "tp" terisi oleh TP bentukan Anda, dan "indikatorSoal" harus benar-benar selaras secara operasional (C1-C6) dengan TP tersebut.
+      3. Materi Pokok: Jika input Materi Utama kosong, buatlah ringkasan materi pokok (2-4 kata) yang paling mewakili konteks CP. Masukkan ke dalam property "header.material".
+      4. Stimulus & Soal: 
+         - Pilihan Ganda: WAJIB menyertakan property "options" sebagai array of strings tanpa abjad penanda (Jangan sertakan "A.", "B.", dll). Jumlah pilihan harus ${data.questionConfigs.find((c: any) => c.type === 'Pilihan Ganda')?.optionCount || 4}.
+         - Pilihan Ganda Kompleks: WAJIB memiliki minimal 2 jawaban yang benar di "multiOptions".
          - Isian Singkat: Jawaban eksak, singkat, padat.
          - Uraian: Jawaban terbuka berbobot dengan rubrik penilaian yang jelas di bagian eksplanasi.
          - Benar Salah: Pernyataan kritis terkait materi.
-      4. Gambar: JIKA stimulus (Pilihan Ganda/Kompleks/Jodohkan/Uraian) membutuhkan gambar (misal: "Perhatikan gambar berikut"), sertakan property "imageUrl" dengan format "IMAGE_STIMULUS: [deskripsi detail gambar untuk diconvert ke AI Image]".
-      5. Kisi-kisi: Samakan No soal dengan data questions. Gunakan deskripsi TP yang sesuai untuk setiap nomor soal.
+      5. Gambar: JIKA stimulus membutuhkan gambar, sertakan property "imageUrl" dengan format "IMAGE_STIMULUS: [deskripsi detail gambar untuk diconvert ke AI Image]".
 
       STRUKTUR JSON OUTPUT WAJIB SEPERTI INI (JANGAN DIUBAH KEY-NYA):
       {
@@ -75,7 +74,7 @@ app.post("/api/generate", async (req, res) => {
           "schoolName": "${data.schoolName}",
           "subject": "${data.subject}",
           "classSemester": "${data.grade} / ${data.semester}",
-          "material": "(Hasil ringkasan materi pokok)",
+          "material": "(Hasil ringkasan/konfirmasi materi pokok)",
           "timeLimit": "60 Menit"
         },
         "questions": [
@@ -95,8 +94,8 @@ app.post("/api/generate", async (req, res) => {
         "kisiKisi": [
           {
             "no": 1,
-            "tp": "Deskripsi TP terkait",
-            "indikatorSoal": "Deskripsi indikator soal",
+            "tp": "[Tuliskan rumusan Tujuan Pembelajaran yang Anda buat otomatis di sini, pastikan relevan dengan materi]",
+            "indikatorSoal": "[Tuliskan Indikator Soal di sini yang diturunkan langsung dan selaras dengan TP di atas]",
             "levelKognitif": "MOTS",
             "bentukSoal": "Pilihan Ganda"
           }
@@ -144,7 +143,6 @@ app.post("/api/generate", async (req, res) => {
         type: q.type || q.jenis || q.bentukSoal || "Pilihan Ganda",
         stimulus: q.stimulus || q.bacaan || "",
         text: q.text || q.pertanyaan || q.soal || "",
-        // Filter Regex untuk membersihkan prefiks abjad seperti "A. ", "B. ", dll. jika AI terlanjur membuatnya
         options: (q.options || q.pilihan || q.jawaban || []).map((opt: string) => 
           typeof opt === 'string' ? opt.replace(/^[A-E]\.\s*/i, '') : opt
         ),
@@ -162,7 +160,7 @@ app.post("/api/generate", async (req, res) => {
     if (Array.isArray(rawKisi)) {
       parsedData.kisiKisi = rawKisi.map((k: any, idx: number) => ({
         no: k.no || k.nomor || (idx + 1),
-        tp: k.tp || k.tujuanPembelajaran || "",
+        tp: k.tp || k.tujuanPembelajaran || "Menerapkan konsep " + (parsedData.header.material),
         indikatorSoal: k.indikatorSoal || k.indikator || "",
         levelKognitif: k.levelKognitif || k.level || "MOTS",
         bentukSoal: k.bentukSoal || k.type || "Pilihan Ganda"
@@ -182,9 +180,8 @@ const distPath = path.join(process.cwd(), "dist");
 app.use(express.static(distPath));
 app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
- });
+});
 
-// Export the app for Vercel Serverless Functions
 export default app;
 
 // Only listen if running locally
