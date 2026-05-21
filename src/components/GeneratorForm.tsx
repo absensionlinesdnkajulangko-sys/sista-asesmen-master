@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Plus, Minus, School, User as UserIcon, Briefcase, GraduationCap, Calendar, BookOpen, Layers, Target, ClipboardList, AlertTriangle } from 'lucide-react';
+import { Plus, Minus, School, User as UserIcon, Briefcase, GraduationCap, Calendar, BookOpen, Layers, Target, ClipboardList, Trash2, AlertTriangle } from 'lucide-react';
 import { SoalFormData, QuestionType, QuestionConfig } from '../types';
 import { NavItem } from './Sidebar';
 import { cn } from '../lib/utils';
@@ -29,11 +29,19 @@ const ALLOWED_TEACHERS = [
 ];
 
 export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFormProps) {
+  // Cek apakah mode saat ini termasuk kategori Sumatif
+  const isSumatifMode = mode === 'sh' || mode === 'sts' || mode === 'sas';
+
   const [formData, setFormData] = useState<SoalFormData>(() => {
     const savedData = localStorage.getItem(`sista_form_${mode}`);
     if (savedData) {
       try {
-        return JSON.parse(savedData);
+        const parsed = JSON.parse(savedData);
+        // Migrasi aman jika data lama di localStorage masih berbentuk string tunggal
+        if (typeof parsed.material === 'string') {
+          parsed.material = parsed.material ? [parsed.material] : [''];
+        }
+        return parsed;
       } catch (e) {
         console.error("Gagal membaca data formulir dari localStorage", e);
       }
@@ -51,7 +59,7 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
       grade: '',
       semester: 'I / Ganjil',
       subject: '',
-      material: '',
+      material: [''], // Menggunakan array untuk mendukung multi-materi
       cp: '',
       withImages: true,
       questionConfigs: [{ type: 'Pilihan Ganda', count: 5, optionCount: 4, scorePerItem: 1 }],
@@ -76,7 +84,11 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
     const savedData = localStorage.getItem(`sista_form_${mode}`);
     if (savedData) {
       try {
-        setFormData(JSON.parse(savedData));
+        const parsed = JSON.parse(savedData);
+        if (typeof parsed.material === 'string') {
+          parsed.material = parsed.material ? [parsed.material] : [''];
+        }
+        setFormData(parsed);
       } catch (e) {
         console.error(e);
       }
@@ -85,7 +97,7 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
         ...prev,
         grade: '',
         subject: '',
-        material: '',
+        material: [''],
         cp: ''
       }));
     }
@@ -99,6 +111,21 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
+  };
+
+  // Handler khusus memanipulasi array Materi Pokok
+  const handleMaterialChange = (index: number, value: string) => {
+    const newMaterials = [...formData.material];
+    newMaterials[index] = value;
+    setFormData(prev => ({ ...prev, material: newMaterials }));
+  };
+
+  const handleAddMaterial = () => {
+    setFormData(prev => ({ ...prev, material: [...prev.material, ''] }));
+  };
+
+  const handleRemoveMaterial = (index: number) => {
+    setFormData(prev => ({ ...prev, material: prev.material.filter((_, i) => i !== index) }));
   };
 
   const handleLevelToggle = (item: string) => {
@@ -232,16 +259,47 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
           <textarea name="cp" value={formData.cp} onChange={handleChange} className={cn(inputClass, "h-24 resize-none")} required placeholder="Tempelkan Capaian Pembelajaran dari Kurikulum Merdeka di sini" />
         </div>
 
-        <div className="space-y-2">
-          <label className={labelClass}><ClipboardList className="w-4 h-4"/> Materi Utama (Materi Pokok)</label>
-          <input 
-            name="material" 
-            value={formData.material} 
-            onChange={handleChange} 
-            className={inputClass} 
-            placeholder="Masukkan Materi Utama" 
-            required
-          />
+        {/* Dynamic Material Input Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <label className={labelClass}><ClipboardList className="w-4 h-4"/> Materi Utama (Materi Pokok)</label>
+            {/* Hanya tampilkan tombol tambah materi jika dalam Mode Sumatif */}
+            {isSumatifMode && (
+              <button 
+                type="button" 
+                onClick={handleAddMaterial}
+                className="text-[10px] font-bold bg-citrus-50 text-citrus-600 px-3 py-1 rounded-full border border-citrus-200 hover:bg-citrus-100 transition-colors"
+              >
+                + Tambah Materi Pokok
+              </button>
+            )}
+          </div>
+          
+          <div className="space-y-3">
+            {formData.material.map((mat, index) => (
+              <div key={index} className="flex gap-2">
+                <div className="flex-1">
+                  <input 
+                    value={mat} 
+                    onChange={(e) => handleMaterialChange(index, e.target.value)} 
+                    className={cn(inputClass, "h-12")} 
+                    placeholder={isSumatifMode ? `Materi Pokok Pembahasan Ujian ${index + 1}` : "Masukkan Materi Utama"} 
+                    required 
+                  />
+                </div>
+                {/* Tombol hapus baris input materi hanya aktif jika jumlah input > 1 dan dalam mode Sumatif */}
+                {isSumatifMode && formData.material.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveMaterial(index)}
+                    className="p-3 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
