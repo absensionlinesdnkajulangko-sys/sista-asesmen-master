@@ -1,0 +1,446 @@
+import { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
+import { Send, Plus, Minus, School, User as UserIcon, Briefcase, GraduationCap, Calendar, BookOpen, Layers, Target, ClipboardList, Trash2, AlertTriangle } from 'lucide-react';
+import { SoalFormData, QuestionType, QuestionConfig } from '../types';
+import { NavItem } from './Sidebar';
+import { cn } from '../lib/utils';
+
+interface GeneratorFormProps {
+  onSubmit: (data: SoalFormData) => void;
+  isLoading: boolean;
+  mode: NavItem;
+}
+
+const COGNITIVE_LEVELS = ['LOTS', 'MOTS', 'HOTS'];
+const QUESTION_TYPES: QuestionType[] = ['Pilihan Ganda', 'Pilihan Ganda Kompleks', 'Isian Singkat', 'Uraian', 'Benar Salah', 'Menjodohkan'];
+
+// KODE KEAMANAN / NAMA SEKOLAH YANG DIIZINKAN
+const ALLOWED_SCHOOLS = [
+  "SD Negeri Sumoli",
+  "SD NEGERI SUMOLI",
+  "SDN SUMOLI" // Anda bisa menambahkan lebih banyak di sini
+];
+
+// KODE KEAMANAN / NAMA GURU YANG DIIZINKAN
+const ALLOWED_TEACHERS = [
+  "Widya Agista Eka Pradita, S.E",
+  "WIDYA AGISTA EKA PRADITA, S.E",
+  "Fidhal" // Ganti atau tambahkan nama guru yang diizinkan di sini
+];
+
+export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFormProps) {
+  const [formData, setFormData] = useState<SoalFormData>(() => {
+    const savedData = localStorage.getItem(`sista_form_${mode}`);
+    if (savedData) {
+      try {
+        return JSON.parse(savedData);
+      } catch (e) {
+        console.error("Gagal membaca data formulir dari localStorage", e);
+      }
+    }
+    return {
+      schoolName: '',
+      teacherName: '',
+      teacherNip: '',
+      position: 'Guru Kelas',
+      principalName: '',
+      principalNip: '',
+      regionName: '',
+      academicYear: '',
+      level: 'SD',
+      grade: '',
+      semester: 'I / Ganjil',
+      subject: '',
+      material: '',
+      cp: '',
+      tp: [''],
+      withImages: true,
+      questionConfigs: [{ type: 'Pilihan Ganda', count: 5, optionCount: 4, scorePerItem: 1 }],
+      cognitiveLevel: ['MOTS']
+    };
+  });
+
+  // Validasi status lisensi sekolah
+  const isSchoolValid = ALLOWED_SCHOOLS.some(
+  (school) => school.toLowerCase() === formData.schoolName.trim().toLowerCase()
+  );
+  const isTeacherValid = ALLOWED_TEACHERS.some(
+    (teacher) => teacher.toLowerCase() === formData.teacherName.trim().toLowerCase()
+  );
+  const isSecurityValid = isSchoolValid && isTeacherValid;
+
+  useEffect(() => {
+    localStorage.setItem(`sista_form_${mode}`, JSON.stringify(formData));
+  }, [formData, mode]);
+
+  useEffect(() => {
+    const savedData = localStorage.getItem(`sista_form_${mode}`);
+    if (savedData) {
+      try {
+        setFormData(JSON.parse(savedData));
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        grade: '',
+        subject: '',
+        material: '',
+        cp: '',
+        tp: ['']
+      }));
+    }
+  }, [mode]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      setFormData(prev => ({ ...prev, [name]: checked }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleAddTP = () => {
+    setFormData(prev => ({ ...prev, tp: [...prev.tp, ''] }));
+  };
+
+  const handleRemoveTP = (index: number) => {
+    setFormData(prev => ({ ...prev, tp: prev.tp.filter((_, i) => i !== index) }));
+  };
+
+  const handleTPChange = (index: number, value: string) => {
+    const newTP = [...formData.tp];
+    newTP[index] = value;
+    setFormData(prev => ({ ...prev, tp: newTP }));
+  };
+
+  const handleLevelToggle = (item: string) => {
+    setFormData(prev => ({
+      ...prev,
+      cognitiveLevel: prev.cognitiveLevel.includes(item)
+        ? prev.cognitiveLevel.filter(i => i !== item)
+        : [...prev.cognitiveLevel, item]
+    }));
+  };
+
+  const addConfig = () => {
+    setFormData(prev => ({
+      ...prev,
+      questionConfigs: [...prev.questionConfigs, { type: 'Pilihan Ganda', count: 5, optionCount: 4, scorePerItem: 1 }]
+    }));
+  };
+
+  const removeConfig = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      questionConfigs: prev.questionConfigs.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateConfig = (index: number, updates: Partial<QuestionConfig>) => {
+    setFormData(prev => ({
+      ...prev,
+      questionConfigs: prev.questionConfigs.map((c, i) => i === index ? { ...c, ...updates } : c)
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isSchoolValid) return; // Mencegah submit lewat bypass enter key
+    onSubmit(formData);
+  };
+
+  const sectionClass = "glass p-6 md:p-8 rounded-[1.5rem] space-y-6";
+  const labelClass = "text-sm font-bold text-citrus-800 flex items-center gap-2";
+  const inputClass = "w-full bg-white/50 border border-citrus-200 rounded-xl py-3 px-4 focus:ring-2 focus:ring-citrus-500 focus:border-transparent outline-none transition-all";
+
+  return (
+    <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-8 pb-20">
+      {/* Identity Section */}
+      <div className={sectionClass}>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="p-2 rounded-lg bg-citrus-100 text-citrus-600">
+            <School className="w-5 h-5" />
+          </div>
+          <h2 className="text-xl font-bold text-citrus-900">Identitas Satuan Pendidikan</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className={labelClass}><School className="w-4 h-4"/> Nama Satuan Pendidikan</label>
+            <input 
+              name="schoolName" value={formData.schoolName} onChange={handleChange} required className={inputClass} placeholder="Contoh: SD Negeri 1 Merdeka" />
+          </div>
+          <div className="space-y-2">
+            <label className={labelClass}><UserIcon className="w-4 h-4"/> Nama Guru</label>
+            <input name="teacherName" value={formData.teacherName} onChange={handleChange} required className={inputClass} placeholder="Nama Lengkap" />
+          </div>
+          <div className="space-y-2">
+            <label className={labelClass}>NIP Guru</label>
+            <input name="teacherNip" value={formData.teacherNip} onChange={handleChange} required className={inputClass} placeholder="NIP" />
+          </div>
+          <div className="space-y-2">
+            <label className={labelClass}><Briefcase className="w-4 h-4"/> Jabatan</label>
+            <select name="position" value={formData.position} onChange={handleChange} required className={inputClass}>
+              <option value="Guru Kelas">Guru Kelas</option>
+              <option value="Guru Mata Pelajaran">Guru Mata Pelajaran</option>
+              <option value="Wali Kelas">Wali Kelas</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className={labelClass}><UserIcon className="w-4 h-4"/> Nama Kepala Sekolah</label>
+            <input name="principalName" value={formData.principalName} onChange={handleChange} required className={inputClass} />
+          </div>
+          <div className="space-y-2">
+            <label className={labelClass}>NIP Kepala Sekolah</label>
+            <input name="principalNip" value={formData.principalNip} onChange={handleChange} required className={inputClass} />
+          </div>
+          <div className="md:col-span-2 space-y-2">
+            <label className={labelClass}><Calendar className="w-4 h-4"/> Tahun Ajaran</label>
+            <input name="academicYear" value={formData.academicYear} onChange={handleChange} required className={inputClass} placeholder="Contoh: 2023/2024" />
+          </div>
+          <div className="md:col-span-2 space-y-2">
+            <label className={labelClass}><Target className="w-4 h-4"/> Nama Kabupaten/Kecamatan/Kelurahan/Desa Sekolah Anda</label>
+            <input name="regionName" value={formData.regionName} onChange={handleChange} required className={inputClass} placeholder="Contoh: Kec. Merdeka, Kab. Indonesia" />
+          </div>
+        </div>
+      </div>
+
+      {/* Curriculum Details */}
+      <div className={sectionClass}>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="p-2 rounded-lg bg-citrus-100 text-citrus-600">
+            <GraduationCap className="w-5 h-5" />
+          </div>
+          <h2 className="text-xl font-bold text-citrus-900">Kurikulum & Materi</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-2">
+            <label className={labelClass}>Jenjang</label>
+            <select name="level" value={formData.level} onChange={handleChange} className={inputClass} required>
+              <option value="SD">SD</option>
+              <option value="SMP">SMP</option>
+              <option value="SMA">SMA</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className={labelClass}>Kelas</label>
+            <input name="grade" value={formData.grade} onChange={handleChange} className={inputClass} placeholder="Contoh: 1, 7, 10" required />
+          </div>
+          <div className="space-y-2">
+            <label className={labelClass}><Calendar className="w-4 h-4"/> Semester</label>
+            <select name="semester" value={formData.semester} onChange={handleChange} className={inputClass} required>
+              <option value="I / Ganjil">I / Ganjil</option>
+              <option value="II / Genap">II / Genap</option>
+            </select>
+          </div>
+        </div>
+        
+        <div className="space-y-2">
+          <label className={labelClass}><BookOpen className="w-4 h-4"/> Mata Pelajaran</label>
+          <input name="subject" value={formData.subject} onChange={handleChange} className={inputClass} required />
+        </div>
+
+        <div className="space-y-2">
+          <label className={labelClass}><Target className="w-4 h-4"/> Capaian Pembelajaran (CP)</label>
+          <textarea name="cp" value={formData.cp} onChange={handleChange} className={cn(inputClass, "h-24 resize-none")} required placeholder="Tempelkan Capaian Pembelajaran dari Kurikulum Merdeka di sini" />
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <label className={labelClass}><Target className="w-4 h-4"/> Tujuan Pembelajaran (TP)</label>
+            <button 
+              type="button" 
+              onClick={handleAddTP}
+              className="text-[10px] font-bold bg-citrus-50 text-citrus-600 px-3 py-1 rounded-full border border-citrus-200 hover:bg-citrus-100 transition-colors"
+            >
+              + Tambah TP
+            </button>
+          </div>
+          <div className="space-y-3">
+            {formData.tp.map((tp, index) => (
+              <div key={index} className="flex gap-2">
+                <div className="flex-1">
+                  <input
+                    value={tp}
+                    onChange={(e) => handleTPChange(index, e.target.value)}
+                    className={cn(inputClass, "h-12")}
+                    required
+                    placeholder={`Tujuan Pembelajaran ${index + 1}`}
+                  />
+                </div>
+                {formData.tp.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTP(index)}
+                    className="p-3 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className={labelClass}><ClipboardList className="w-4 h-4"/> Materi Utama (Materi Pokok)</label>
+          <input 
+            name="material" 
+            value={formData.material} 
+            onChange={handleChange} 
+            className={inputClass} 
+            placeholder="Biarkan kosong agar AI menentukan otomatis" 
+          />
+          <p className="text-[9px] text-slate-400 italic">Jika dikosongkan, AI akan meringkas Materi Utama dari deskripsi TP Anda.</p>
+        </div>
+      </div>
+
+      {/* Question Config */}
+      <div className={sectionClass}>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-citrus-100 text-citrus-600">
+              <Layers className="w-5 h-5" />
+            </div>
+            <h2 className="text-xl font-bold text-citrus-900">Konfigurasi Tipe Soal</h2>
+          </div>
+          <button type="button" onClick={addConfig} className="flex items-center gap-2 text-citrus-700 font-bold hover:text-citrus-900 transition-colors px-3 py-1 bg-citrus-100 rounded-lg text-sm">
+            <Plus className="w-4 h-4" /> Tambah Tipe
+          </button>
+        </div>
+        
+        <div className="space-y-4">
+          {formData.questionConfigs.map((config, idx) => (
+            <div key={idx} className="bg-white/40 p-6 rounded-2xl border border-citrus-100 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-citrus-600 uppercase">Bentuk Soal</label>
+                  <select 
+                    value={config.type} 
+                    onChange={(e) => updateConfig(idx, { type: e.target.value as QuestionType })}
+                    className={cn(inputClass, "py-2 text-sm")}
+                  >
+                    {QUESTION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 space-y-1">
+                    <label className="text-[10px] font-bold text-citrus-600 uppercase">Jumlah Soal</label>
+                    <div className="flex items-center gap-2 bg-white rounded-xl border border-citrus-200 p-1">
+                      <button type="button" onClick={() => updateConfig(idx, { count: Math.max(1, config.count - 1) })} className="p-1 px-2 hover:bg-citrus-50 rounded-lg transition-colors"><Minus className="w-3 h-3 text-citrus-600"/></button>
+                      <span className="font-bold w-full text-center text-sm">{config.count}</span>
+                      <button type="button" onClick={() => updateConfig(idx, { count: config.count + 1 })} className="p-1 px-2 hover:bg-citrus-50 rounded-lg transition-colors"><Plus className="w-3 h-3 text-citrus-600"/></button>
+                    </div>
+                  </div>
+                  {config.type === 'Pilihan Ganda' && (
+                    <div className="w-24 space-y-1">
+                      <label className="text-[10px] font-bold text-citrus-600 uppercase">Option</label>
+                      <select
+                        value={config.optionCount || 4}
+                        onChange={(e) => updateConfig(idx, { optionCount: parseInt(e.target.value) })}
+                        className={cn(inputClass, "py-2 px-2 text-sm")}
+                      >
+                        <option value={3}>3 (A-C)</option>
+                        <option value={4}>4 (A-D)</option>
+                        <option value={5}>5 (A-E)</option>
+                      </select>
+                    </div>
+                  )}
+                  <div className="w-24 space-y-1">
+                    <label className="text-[10px] font-bold text-citrus-600 uppercase">Skor/Soal</label>
+                    <input 
+                      type="number" 
+                      value={config.scorePerItem}
+                      onChange={(e) => updateConfig(idx, { scorePerItem: parseInt(e.target.value) || 0 })}
+                      className={cn(inputClass, "py-2 px-2 text-sm text-center")}
+                    />
+                  </div>
+                  {formData.questionConfigs.length > 1 && (
+                    <div className="pt-5">
+                      <button type="button" onClick={() => removeConfig(idx)} className="p-2 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                        <Minus className="w-5 h-5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="space-y-4 border-t border-citrus-100 pt-6">
+          <label className={labelClass}>Level Kognitif</label>
+          <div className="flex flex-wrap gap-3">
+            {COGNITIVE_LEVELS.map(item => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => handleLevelToggle(item)}
+                className={cn(
+                  "px-6 py-3 rounded-xl text-sm font-semibold border transition-all",
+                  formData.cognitiveLevel.includes(item)
+                    ? "bg-citrus-600 border-citrus-600 text-white shadow-md shadow-citrus-600/20"
+                    : "bg-white border-citrus-200 text-citrus-700 hover:border-citrus-400"
+                )}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+          <div className="pt-4">
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <div className="relative">
+                <input 
+                  type="checkbox" 
+                  className="sr-only peer"
+                  checked={formData.withImages}
+                  onChange={(e) => setFormData({ ...formData, withImages: e.target.checked })}
+                />
+                <div className="w-12 h-6 bg-slate-200 peer-checked:bg-citrus-600 rounded-full transition-colors" />
+                <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-6 shadow-sm" />
+              </div>
+              <span className="text-sm font-bold text-slate-700 group-hover:text-citrus-600 transition-colors">Generate Stimulus Gambar Otomatis (AI Image)</span>
+            </label>
+          </div>
+          {formData.cognitiveLevel.length === 0 && (
+            <p className="text-xs text-red-500 italic">Pilih minimal satu level kognitif.</p>
+          )}
+        </div>
+      </div>
+
+      {/* Submit Button */}
+      <motion.button
+        whileHover={(!isLoading && isSecurityValid && formData.cognitiveLevel.length > 0) ? { scale: 1.01 } : {}}
+        whileTap={(!isLoading && isSecurityValid && formData.cognitiveLevel.length > 0) ? { scale: 0.99 } : {}}
+        type="submit"
+        disabled={isLoading || formData.cognitiveLevel.length === 0 || !isSecurityValid}
+        className={cn(
+          "w-full font-bold py-5 rounded-2xl shadow-xl flex items-center justify-center gap-3 transition-all",
+          (isLoading || formData.cognitiveLevel.length === 0 || !isSecurityValid)
+            ? "bg-slate-300 text-slate-500 shadow-none cursor-not-allowed opacity-70"
+            : "gradient-citrus text-white shadow-citrus-500/20 cursor-pointer"
+        )}
+      >
+        {isLoading ? (
+          <>
+            <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            Generating Assessment...
+          </>
+        ) : !isSecurityValid ? (
+          <>
+            <AlertTriangle className="w-6 h-6" />
+            Aplikasi Terkunci: Kode Validasi Anda Tidak Valid. (Hubungi Fidhal Touna AI)
+          </>
+        ) : (
+          <>
+            <Target className="w-6 h-6" />
+            Generate Lembar Asesmen
+          </>
+        )}
+      </motion.button>
+    </form>
+  );
+}

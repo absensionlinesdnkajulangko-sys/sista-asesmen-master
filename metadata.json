@@ -1,0 +1,8 @@
+{
+  "name": "SISTA (Sistem Asesmen Pintar)",
+  "description": "SISTA (Sistem Asesmen Pintar) - AI Assessment Generator developed by FIDHAL TOUNA AI. Pembuat Soal Otomatis sesuai standar Kurikulum Merdeka (HOTS/MOTS/LOTS).",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

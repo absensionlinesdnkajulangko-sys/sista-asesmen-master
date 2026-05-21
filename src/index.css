@@ -1,0 +1,129 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Citrus Fresh Palette */
+  --color-citrus-50: #f7fee7;
+  --color-citrus-100: #ecfccb;
+  --color-citrus-200: #d9f99d;
+  --color-citrus-300: #bef264;
+  --color-citrus-400: #a3e635;
+  --color-citrus-500: #84cc16;
+  --color-citrus-600: #65a30d;
+  --color-citrus-700: #4d7c0f;
+  --color-citrus-800: #3f6212;
+  --color-citrus-900: #365314;
+}
+
+@utility glass {
+  background-color: rgb(255 255 255 / 0.7);
+  backdrop-filter: blur(12px);
+  border-width: 1px;
+  border-color: rgb(255 255 255 / 0.2);
+  box-shadow: var(--shadow-xl);
+}
+
+@utility glass-dark {
+  background-color: color-mix(in srgb, var(--color-citrus-900) 40%, transparent);
+  backdrop-filter: blur(16px);
+  border-width: 1px;
+  border-color: color-mix(in srgb, var(--color-citrus-500) 20%, transparent);
+  box-shadow: var(--shadow-2xl);
+}
+
+@utility gradient-citrus {
+  background: linear-gradient(135deg, var(--color-citrus-400) 0%, var(--color-citrus-600) 100%);
+}
+
+@utility gradient-bg {
+  background: radial-gradient(circle at top left, var(--color-citrus-50) 0%, #ffffff 100%);
+}
+
+body {
+  @apply gradient-bg min-h-screen text-slate-800 antialiased font-sans;
+}
+
+/* Custom table styles for spreadsheet look */
+.spreadsheet-table {
+  width: 100%;
+  border-collapse: collapse;
+  @apply text-sm;
+}
+
+.spreadsheet-table th, .spreadsheet-table td {
+  border: 1px solid #cbd5e1;
+  padding: 0.75rem;
+  vertical-align: top;
+}
+
+.spreadsheet-table th {
+  @apply bg-citrus-50 text-citrus-900 font-bold uppercase tracking-wider;
+}
+
+.spreadsheet-table td {
+  @apply bg-white;
+}
+
+.signature-table, .signature-table td {
+  border: none !important;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0.5in !important;
+  }
+  .max-w-5xl {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .shadow-2xl, .shadow-xl, .shadow-sm, .shadow-inner {
+    box-shadow: none !important;
+  }
+  .border {
+    border-color: #000 !important;
+  }
+  .bg-slate-50, .bg-citrus-50 {
+    background-color: transparent !important;
+  }
+  button {
+    display: none !important;
+  }
+  @page {
+    margin: 0.5in;
+    size: auto;
+  }
+  .break-inside-avoid {
+    break-inside: avoid;
+  }
+  .identity-table td {
+    border: 1px solid black !important;
+  }
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  th, td {
+    border-color: #000 !important;
+  }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-citrus-200 rounded-full hover:bg-citrus-300 transition-colors;
+}
