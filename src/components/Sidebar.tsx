@@ -11,7 +11,8 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ active, onChange, onLogout }: SidebarProps) {
-  const [phOpen, setPhOpen] = useState(true);
+  // PERBAIKAN: Set awal ke false agar menu tertutup rapi saat pertama kali dimuat
+  const [phOpen, setPhOpen] = useState(false);
 
   const MenuItem = ({ id, icon: Icon, label, sub = false }: { id: NavItem, icon: any, label: string, sub?: boolean }) => (
     <button
@@ -62,7 +63,8 @@ export default function Sidebar({ active, onChange, onLogout }: SidebarProps) {
                 <ClipboardCheck className="w-5 h-5 text-citrus-500/60" />
                 <span>Penilaian Harian</span>
               </div>
-              <ChevronDown className={cn("w-4 h-4 transition-transform", phOpen ? "" : "-rotate-90")} />
+              {/* PERBAIKAN: Rotasi ikon panah disesuaikan (berputar ke bawah jika terbuka) */}
+              <ChevronDown className={cn("w-4 h-4 transition-transform duration-200", phOpen ? "rotate-180" : "")} />
             </button>
             
             {phOpen && (
