@@ -114,12 +114,6 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
     return String(answerKey);
   };
 
-  // Helper untuk mengambil poin skor per item berdasarkan tipe soal dari konfigurasi formInput
-  const getQuestionScore = (type: string) => {
-    const config = formInput.questionConfigs?.find(c => c.type === type);
-    return config ? config.scorePerItem : 0;
-  };
-
   const downloadWord = () => {
     if (!containerRef.current) return;
     
@@ -159,8 +153,8 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
         contentHtml += `</div><br>`;
       }
     } else if (activeTab === 'kunci') {
-      // PERBAIKAN ekspor Word Lembar Kunci: Menghapus kolom bentuk, menambahkan kolom skor di kanan
-      contentHtml += `<table class="spreadsheet-table"><tr><th width="40">No</th><th>Kunci & Pembahasan</th><th width="60">Skor</th></tr>${localQuestions.map(q => `<tr><td class="centered">${q.number}</td><td><b>KUNCI: ${formatAnswerKey(q.answerKey)}</b><br><i>Bahasan: ${q.explanation || '-'}</i><br><small>Level: ${q.cognitiveLevel || 'MOTS'}</small></td><td class="centered">${getQuestionScore(q.type)}</td></tr>`).join('')}</table>`;
+      // PERBAIKAN Word Lembar Kunci: Tanpa kolom bentuk, rubrik penilaian diisi oleh AI ke kolom Skor
+      contentHtml += `<table class="spreadsheet-table"><tr><th width="40">No</th><th>Kunci & Pembahasan</th><th width="100">Skor / Rubrik</th></tr>${localQuestions.map(q => `<tr><td class="centered">${q.number}</td><td><b>KUNCI: ${formatAnswerKey(q.answerKey)}</b><br><i>Bahasan: ${q.explanation || '-'}</i><br><small>Level: ${q.cognitiveLevel || 'MOTS'}</small></td><td class="centered">${(q as any).score || (q as any).rubrik || '-'}</td></tr>`).join('')}</table>`;
     } else if (activeTab === 'kisi') {
       contentHtml += `<table class="spreadsheet-table"><tr><th>No</th><th>Capaian & Tujuan Pembelajaran</th><th>Indikator</th><th>Level</th><th>Bentuk</th></tr>${localKisiKisi.map(k => `<tr><td class="centered">${k.no}</td><td><b>CP:</b> ${formInput.cp}<br><b>TP:</b> ${k.tp || '-'}</td><td>${k.indikatorSoal}</td><td class="centered">${k.levelKognitif}</td><td class="centered">${k.bentukSoal}</td></tr>`).join('')}</table>`;
     }
@@ -196,7 +190,6 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-32">
-      {/* PERBAIKAN: Menambahkan aturan menghilangkan border luar (.print-container) saat cetak langsung */}
       <style dangerouslySetInnerHTML={{ __html: `@media print { .no-print, button, header, nav, aside, footer, .sticky { display: none !important; } body, main, #root { background: white !important; padding: 0 !important; margin: 0 !important; width: 100% !important; } .print-container { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; } table, .spreadsheet-table { width: 100% !important; border-collapse: collapse !important; } .spreadsheet-table th, .spreadsheet-table td { border: 1px solid #000000 !important; padding: 6px !important; font-size: 10pt !important; } .no-wrap-print { white-space: nowrap !important; } }`}} />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 no-print bg-white/80 backdrop-blur-md p-4 rounded-[1.5rem] border border-citrus-100 sticky top-4 z-40 shadow-xl shadow-citrus-900/5">
@@ -230,9 +223,7 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
         </div>
       </div>
 
-      {/* MENAMBAHKAN CLASS 'print-container' UNTUK DIKONTROL OLEH CSS @media print */}
       <div ref={containerRef} className="print-container bg-white p-8 md:p-12 shadow-2xl border border-slate-200 min-h-[1000px] relative">
-        {/* SKELETON LOADING INDIKATOR OVERLAY */}
         {isTabLoading && (
           <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center space-y-4">
             <div className="w-12 h-12 border-4 border-citrus-200 border-t-citrus-600 rounded-full animate-spin" />
@@ -337,12 +328,12 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
           <div className="space-y-8">
             <h3 className="text-lg font-bold border-b-2 border-citrus-200 pb-2 text-citrus-800 uppercase tracking-tighter">Kunci Jawaban & Rubrik Penilaian</h3>
             <table className="spreadsheet-table w-full">
-              {/* PERBAIKAN komponen UI Lembar Kunci: Kolom bentuk dibuang, kolom skor ditambahkan di ujung kanan */}
+              {/* PERBAIKAN: Kolom bentuk dihapus, kolom Skor diletakkan di sebelah kanan */}
               <thead>
                 <tr>
                   <th className="w-16 text-center">No</th>
                   <th>Kunci & Pembahasan</th>
-                  <th className="w-20 text-center">Skor</th>
+                  <th className="w-28 text-center">Skor / Rubrik</th>
                 </tr>
               </thead>
               <tbody>
@@ -361,8 +352,11 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
                         <p className="text-[10px] text-citrus-600 font-bold uppercase">Level Kognitif: {q.cognitiveLevel}</p>
                       </div>
                     </td>
-                    <td className="text-center font-bold text-slate-800 font-mono text-sm">
-                      {getQuestionScore(q.type)}
+                    {/* PERBAIKAN: Skor dibaca langsung dari parameter respons AI (q.score atau q.rubrik jika isian/uraian kompleks) */}
+                    <td className="text-center font-bold text-slate-800 text-xs p-2 bg-slate-50/50">
+                      <div className="whitespace-pre-wrap leading-relaxed">
+                        {(q as any).score || (q as any).rubrik || "1"}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -409,7 +403,7 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
           <table className="signature-table mt-20 no-border w-full">
             <tbody>
               <tr>
-                <td className="text-left align-top"><p>Mengetahui,</p><p>Kepala Sekolah</p><div className="h-24"></div><p className="font-bold underline">{formInput.principalName}</p><p>NIP. {formInput.principalNip}</p></td>
+                <td className="text-left align-top"><p>Mengetahui,</p><p>Kepala Sekolah</p><div className="h-24"></div><p className="font-bold underline">{formInput.principalName}</p><p>NIP. ${formInput.principalNip}</p></td>
                 <td className="text-left align-top"><p>{formInput.regionName}, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p><p>{formInput.position}</p><div className="h-24"></div><p className="font-bold underline">{formInput.teacherName}</p><p>NIP. {formInput.teacherNip}</p></td>
               </tr>
             </tbody>
