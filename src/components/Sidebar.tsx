@@ -11,27 +11,30 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ active, onChange, onLogout }: SidebarProps) {
-  // PERBAIKAN: Set awal ke false agar menu tertutup rapi saat pertama kali dimuat
+  // Set awal ke false agar menu tertutup rapi saat pertama kali dimuat
   const [phOpen, setPhOpen] = useState(false);
 
-  const MenuItem = ({ id, icon: Icon, label, sub = false }: { id: NavItem, icon: any, label: string, sub?: boolean }) => (
+  // PERBAIKAN: Menambahkan parameter className opsional agar ukuran font bisa disesuaikan dari luar
+  const MenuItem = ({ id, icon: Icon, label, sub = false, className }: { id: NavItem, icon: any, label: string, sub?: boolean, className?: string }) => (
     <button
       onClick={() => onChange(id)}
       className={cn(
-        "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all group",
+        "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all group whitespace-nowrap", // Ditambahkan whitespace-nowrap agar teks selalu lurus
         active === id 
           ? "bg-citrus-500 text-white shadow-lg shadow-citrus-500/20" 
           : "text-slate-500 hover:bg-citrus-50 hover:text-citrus-600",
-        sub && "pl-12 py-2 text-sm"
+        sub && "pl-12 py-2 text-sm",
+        className // Menyisipkan kelas CSS tambahan jika ada
       )}
     >
-      <Icon className={cn("w-5 h-5 transition-transform group-hover:scale-110", active === id ? "text-white" : "text-citrus-500/60")} />
-      {label}
+      <Icon className={cn("w-5 h-5 transition-transform group-hover:scale-110 shrink-0", active === id ? "text-white" : "text-citrus-500/60")} />
+      <span>{label}</span>
     </button>
   );
 
   return (
-    <aside className="w-80 h-screen bg-white border-r border-citrus-100 flex flex-col flex-shrink-0 sticky top-0 no-print">
+    // PERBAIKAN: Lebar sidebar disesuaikan sedikit menjadi w-84 agar teks panjang memiliki ruang lebih
+    <aside className="w-84 h-screen bg-white border-r border-citrus-100 flex flex-col flex-shrink-0 sticky top-0 no-print">
       <div className="p-8 pb-4">
         <div className="flex items-center gap-3 mb-8">
           <div className="w-12 h-12 rounded-2xl bg-citrus-500 flex items-center justify-center shadow-xl shadow-citrus-500/30 overflow-hidden">
@@ -57,13 +60,12 @@ export default function Sidebar({ active, onChange, onLogout }: SidebarProps) {
           <div>
             <button 
               onClick={() => setPhOpen(!phOpen)}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-slate-500 hover:bg-citrus-50 hover:text-citrus-600 transition-all"
+              className="w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-slate-500 hover:bg-citrus-50 hover:text-citrus-600 transition-all whitespace-nowrap"
             >
               <div className="flex items-center gap-3">
-                <ClipboardCheck className="w-5 h-5 text-citrus-500/60" />
+                <ClipboardCheck className="w-5 h-5 text-citrus-500/60 shrink-0" />
                 <span>Penilaian Harian</span>
               </div>
-              {/* PERBAIKAN: Rotasi ikon panah disesuaikan (berputar ke bawah jika terbuka) */}
               <ChevronDown className={cn("w-4 h-4 transition-transform duration-200", phOpen ? "rotate-180" : "")} />
             </button>
             
@@ -76,8 +78,9 @@ export default function Sidebar({ active, onChange, onLogout }: SidebarProps) {
             )}
           </div>
 
-          <MenuItem id="sts" icon={FileText} label="Sumatif Tengah Semester" />
-          <MenuItem id="sas" icon={FileText} label="Sumatif Akhir Semester" />
+          {/* PERBAIKAN: Menggunakan text-sm dan memaksa teks memanjang lurus tanpa patah baris */}
+          <MenuItem id="sts" icon={FileText} label="Sumatif Tengah Semester" className="text-sm" />
+          <MenuItem id="sas" icon={FileText} label="Sumatif Akhir Semester" className="text-sm" />
         </nav>
       </div>
 
@@ -86,7 +89,7 @@ export default function Sidebar({ active, onChange, onLogout }: SidebarProps) {
           onClick={onLogout}
           className="w-full flex items-center gap-3 px-4 py-4 rounded-2xl font-bold text-red-500 hover:bg-red-50 transition-all border border-red-100 shadow-sm"
         >
-          <LogOut className="w-5 h-5" />
+          <LogOut className="w-5 h-5 shrink-0" />
           <span>Logout</span>
         </button>
         
