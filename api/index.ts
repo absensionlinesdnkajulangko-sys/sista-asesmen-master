@@ -40,7 +40,12 @@ app.post("/api/generate", async (req, res) => {
       `${c.count} soal ${c.type} ${c.type === 'Pilihan Ganda' ? `dengan ${c.optionCount} pilihan jawaban` : ''} (Skor/soal: ${c.scorePerItem})`
     ).join(", ");
 
-    // PERBAIKAN UTAMA: Mengubah struktur instruksi prompt agar AI membuat TP secara otomatis dan selaras
+    // Memformat materi menjadi list bernomor agar AI menyadari ada banyak materi pokok
+    const formattedMaterials = Array.isArray(data.material) 
+      ? data.material.filter((m: string) => m.trim() !== '').map((m: string, i: number) => `${i + 1}. ${m}`).join("\n      ")
+      : data.material;
+
+    // PERBAIKAN UTAMA: Penambahan instruksi PROPORSI MATERI & SOAL
     const prompt = `
       Bertindaklah sebagai Pakar Asesmen Kurikulum Merdeka dan Ahli Evaluasi Pendidikan Indonesia. 
       Buatlah instrumen asesmen yang modern dengan standar literasi dan numerasi (AKM).
@@ -48,7 +53,8 @@ app.post("/api/generate", async (req, res) => {
       DATA INPUT:
       - Satuan Pendidikan: ${data.schoolName}
       - Mapel: ${data.subject}
-      - Materi Pokok / Utama: ${Array.isArray(data.material) ? data.material.join(", ") : data.material}
+      - Materi Pokok / Utama: 
+      ${formattedMaterials}
       - Capaian Pembelajaran (CP): ${data.cp}
       - Kelas/Semester: ${data.grade} / ${data.semester}
       - Tahun Ajaran: ${data.academicYear}
@@ -56,17 +62,18 @@ app.post("/api/generate", async (req, res) => {
       - Level Kognitif: ${data.cognitiveLevel.join(", ")}
       - Gunakan Stimulus Gambar: ${data.withImages ? 'YA (Hasilkan deskripsi visual)' : 'TIDAK'}
       
-      TUGAS UTAMA ANDA (OTOMATISASI TUJUAN PEMBELAJARAN):
-      1. Berdasarkan "Materi Pokok" dan "Capaian Pembelajaran (CP)" yang diinputkan di atas, Anda WAJIB merumuskan sendiri daftar Tujuan Pembelajaran (TP) yang logis, terukur, dan sesuai dengan esensi Kurikulum Merdeka.
-      2. Distribusi & Keselarasan: Turunkan setiap nomor soal secara runtut dari TP tersebut. Untuk setiap butir soal di bagian "kisiKisi", pastikan teks properti "tp" terisi oleh TP bentukan Anda, dan "indikatorSoal" harus benar-benar selaras secara operasional (C1-C6) dengan TP tersebut.
-      3. Materi Pokok: Jika input Materi Utama kosong, buatlah ringkasan materi pokok (2-4 kata) yang paling mewakili konteks CP. Masukkan ke dalam property "header.material".
-      4. Stimulus & Soal: 
+      TUGAS UTAMA ANDA (OTOMATISASI TUJUAN PEMBELAJARAN & PROPORSI SOAL):
+      1. PROPORSI MATERI: JIKA terdapat lebih dari satu "Materi Pokok" pada Data Input di atas (Kasus Sumatif Harian/STS/SAS), Anda WAJIB membagi dan mendistribusikan total konfigurasi soal secara otomatis, merata, dan proporsional ke SELURUH materi pokok tersebut. Jangan sampai ada materi yang tidak mendapatkan soal.
+      2. Berdasarkan "Materi Pokok" dan "Capaian Pembelajaran (CP)", Anda WAJIB merumuskan sendiri daftar Tujuan Pembelajaran (TP) yang logis, terukur, dan spesifik mewakili masing-masing materi pokok tersebut.
+      3. Distribusi & Keselarasan: Turunkan setiap nomor soal secara runtut dari TP tersebut. Untuk setiap butir soal di bagian "kisiKisi", pastikan teks properti "tp" terisi oleh TP bentukan Anda, dan "indikatorSoal" harus benar-benar selaras secara operasional (C1-C6) dengan materi soal dan TP-nya.
+      4. Materi Pokok Header: Jika input Materi Utama kosong, buatlah ringkasan materi pokok (2-4 kata). Jika banyak, gabungkan dengan koma. Masukkan ke dalam property "header.material".
+      5. Stimulus & Soal: 
          - Pilihan Ganda: WAJIB menyertakan property "options" sebagai array of strings tanpa abjad penanda (Jangan sertakan "A.", "B.", dll). Jumlah pilihan harus ${data.questionConfigs.find((c: any) => c.type === 'Pilihan Ganda')?.optionCount || 4}.
          - Pilihan Ganda Kompleks: WAJIB memiliki minimal 2 jawaban yang benar di "multiOptions".
          - Isian Singkat: Jawaban eksak, singkat, padat.
          - Uraian: Jawaban terbuka berbobot dengan rubrik penilaian yang jelas di bagian eksplanasi.
          - Benar Salah: Pernyataan kritis terkait materi.
-      5. Gambar: JIKA stimulus membutuhkan gambar, sertakan property "imageUrl" dengan format "IMAGE_STIMULUS: [deskripsi detail gambar untuk diconvert ke AI Image]".
+      6. Gambar: JIKA stimulus membutuhkan gambar, sertakan property "imageUrl" dengan format "IMAGE_STIMULUS: [deskripsi detail gambar untuk diconvert ke AI Image]".
 
       STRUKTUR JSON OUTPUT WAJIB SEPERTI INI (JANGAN DIUBAH KEY-NYA):
       {
@@ -74,7 +81,7 @@ app.post("/api/generate", async (req, res) => {
           "schoolName": "${data.schoolName}",
           "subject": "${data.subject}",
           "classSemester": "${data.grade} / ${data.semester}",
-          "material": "(Hasil ringkasan/konfirmasi materi pokok)",
+          "material": "(Hasil ringkasan/gabungan materi pokok)",
           "timeLimit": "60 Menit"
         },
         "questions": [
@@ -94,7 +101,7 @@ app.post("/api/generate", async (req, res) => {
         "kisiKisi": [
           {
             "no": 1,
-            "tp": "[Tuliskan rumusan Tujuan Pembelajaran yang Anda buat otomatis di sini, pastikan relevan dengan materi]",
+            "tp": "[Tuliskan rumusan Tujuan Pembelajaran yang Anda buat otomatis di sini, pastikan relevan dengan materi ke-X]",
             "indikatorSoal": "[Tuliskan Indikator Soal di sini yang diturunkan langsung dan selaras dengan TP di atas]",
             "levelKognitif": "MOTS",
             "bentukSoal": "Pilihan Ganda"
