@@ -39,13 +39,12 @@ async function fetchSecureWithRetry(url: string, options: any, retries = 3, back
   }
 }
 
-// PERBAIKAN TOTAL: Menghilangkan Pembahasan dan Mengalihkannya Penuh ke Rubrik Penilaian Kuantitatif + Kualitatif
+// PERBAIKAN TOTAL: Mengembalikan Pembahasan Terperinci dan Mempertahankan Rubrik Penilaian Ketat
 const CUSTOM_INSTRUCTION = `PENTING: Gunakan selalu kata 'murid' untuk merujuk pada anak didik. Jangan pernah menggunakan istilah 'peserta didik' di dalam teks output yang Anda hasilkan.
 
-STRICT RULE - HANYA KUNCI JAWABAN DAN RUBRIK PENILAIAN (TANPA PEMBAHASAN):
-1. Jangan berikan penjelasan materi atau pembahasan soal pada kolom manapun! Kosongkan atau abaikan bidang 'explanation'.
-2. Setiap objek soal dalam array 'questions' HARUS fokus menghasilkan kunci jawaban yang tepat pada 'answerKey' dan rubrik terperinci pada properti 'score'.
-3. Properti 'score' wajib diisi otomatis dengan format string tegas yang mencantumkan kalkulasi skor maksimal riil beserta panduan penilaian sebagai berikut:
+STRICT RULE - PEMBAHASAN DAN SKOR/RUBRIK WAJIB DIISI SECARA TERPISAH:
+1. Kolom Pembahasan ('explanation'): Wajib diisi dengan penjelasan ilmiah, langkah penyelesaian, atau analisis rasional mengapa kunci jawaban tersebut benar. Jangan mengosongkan kolom ini.
+2. Kolom Skor ('score'): Jangan letakkan penjelasan materi di sini! Properti ini khusus diisi dengan format string tegas yang mencantumkan kalkulasi skor maksimal riil beserta panduan kriteria penilaian sebagai berikut:
 "Skor Maksimal: [Angka_Skor]\n\nRubrik Penilaian:\n[Detail_Aturan_Penilaian]"
 
 Ketentuan Perhitungan Nilai & Isi Rubrik Berdasarkan Bentuk Soal:
@@ -122,7 +121,7 @@ export async function generateKunciOnly(header: any, questions: any[]): Promise<
   } catch (error: any) {
     console.error("Error Generate Kunci:", error);
     if (error.message?.includes("503") || error.message?.toLowerCase().includes("demand")) {
-      throw new Error("Server AI sedang padat saat merumuskan Kunci Jawaban. Silakan klik ulang kembali tab Kunci & Bahasan.");
+      throw new Error("Server AI sedang padat saat merumuskan Kunci Jawaban. Silakan klik ulang kembali tab Kunci & Rubrik.");
     }
     throw error;
   }
