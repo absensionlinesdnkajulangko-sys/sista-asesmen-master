@@ -64,7 +64,7 @@ export default function Sidebar({ active, onChange, onLogout }: SidebarProps) {
             >
               <div className="flex items-center gap-3">
                 <ClipboardCheck className="w-5 h-5 text-citrus-500/60 shrink-0" />
-                <span>Penilaian Harian</span>
+                <span className="text-sm">Penilaian Harian</span>
               </div>
               <ChevronDown className={cn("w-4 h-4 transition-transform duration-200", phOpen ? "rotate-180" : "")} />
             </button>
