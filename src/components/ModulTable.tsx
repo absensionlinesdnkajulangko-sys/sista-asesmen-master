@@ -64,6 +64,18 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
   
   const currentMaterial = getMaterialString();
 
+  // PERBAIKAN: Helper untuk merender struktur jawaban AI agar tidak pecah (Support Array, Object, String)
+  const formatAnswerKey = (answerKey: any) => {
+    if (!answerKey) return '-';
+    if (Array.isArray(answerKey)) {
+      return answerKey.join(', ');
+    }
+    if (typeof answerKey === 'object' && answerKey !== null) {
+      return Object.entries(answerKey).map(([key, val]) => `${key}: ${val}`).join(', ');
+    }
+    return String(answerKey);
+  };
+
   const downloadWord = () => {
     if (!containerRef.current) return;
     
@@ -189,11 +201,7 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
               <td class="centered">${q.number}</td>
               <td class="centered">${q.type}</td>
               <td>
-                <b>KUNCI: ${
-                  typeof q.answerKey === 'object' && q.answerKey !== null
-                    ? Object.entries(q.answerKey).map(([key, val]) => `${key}: ${val}`).join(', ')
-                    : q.answerKey || '-'
-                }</b>
+                <b>KUNCI: ${formatAnswerKey(q.answerKey)}</b>
                 <br><i>Bahasan: ${q.explanation || '-'}</i>
                 <br><small>Level: ${q.cognitiveLevel || 'MOTS'}</small>
               </td>
@@ -604,11 +612,7 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
                         <div className="flex items-start gap-2">
                           <span className="text-xs font-bold bg-citrus-500 text-white px-2 py-0.5 rounded">KUNCI</span>
                           <p className="font-bold text-citrus-900">
-                            {typeof q.answerKey === 'object' && q.answerKey !== null
-                              ? Object.entries(q.answerKey)
-                                  .map(([key, val]) => `${key}: ${val}`)
-                                  .join(', ')
-                              : String(q.answerKey || '-')}
+                            {formatAnswerKey(q.answerKey)}
                           </p>
                         </div>
                         <div className="flex items-start gap-2 bg-slate-50 p-3 rounded-lg border border-slate-100">
