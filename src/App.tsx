@@ -9,7 +9,8 @@ import GeneratorForm from './components/GeneratorForm';
 import ModulTable from './components/ModulTable';
 import Sidebar, { NavItem } from './components/Sidebar';
 import { SoalFormData, GeneratedSoal } from './types';
-import { generateSoal } from './lib/gemini';
+// PERBAIKAN: Impor fungsi baru yang hanya meng-generate soal saja
+import { generateSoalOnly } from './lib/gemini'; 
 import { motion, AnimatePresence } from 'motion/react';
 import { Target, LayoutDashboard, Search, Bell, User as UserIcon, FileText } from 'lucide-react';
 
@@ -27,7 +28,7 @@ export default function App() {
     setFormData(null);
   };
 
-  // PERBAIKAN: Berfungsi normal memanggil wrapper baru yang telah disesuaikan rutenya
+  // PERBAIKAN: Memanggil wrapper generateSoalOnly agar kunci dan kisi-kisi dimuat secara on-demand nanti
   const handleSubmit = async (data: SoalFormData) => {
     setIsLoading(true);
     setFormData(data);
