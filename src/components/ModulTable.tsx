@@ -87,7 +87,7 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
   const getHeaderText = () => {
     switch(activeTab) {
       case 'soal': return 'LEMBAR ASESMEN KURIKULUM MERDEKA';
-      case 'kunci': return 'LEMBAR KUNCI JAWABAN DAN BAHASAN';
+      case 'kunci': return 'LEMBAR KUNCI JAWABAN DAN RUBRIK PENILAIAN';
       case 'kisi': return 'LEMBAR KISI-KISI SOAL';
       default: return 'LEMBAR ASESMEN KURIKULUM MERDEKA';
     }
@@ -153,8 +153,8 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
         contentHtml += `</div><br>`;
       }
     } else if (activeTab === 'kunci') {
-      // PERBAIKAN Word Lembar Kunci: Tanpa kolom bentuk, rubrik penilaian diisi oleh AI ke kolom Skor
-      contentHtml += `<table class="spreadsheet-table"><tr><th width="40">No</th><th>Kunci & Pembahasan</th><th width="100">Skor / Rubrik</th></tr>${localQuestions.map(q => `<tr><td class="centered">${q.number}</td><td><b>KUNCI: ${formatAnswerKey(q.answerKey)}</b><br><i>Bahasan: ${q.explanation || '-'}</i><br><small>Level: ${q.cognitiveLevel || 'MOTS'}</small></td><td class="centered">${(q as any).score || (q as any).rubrik || '-'}</td></tr>`).join('')}</table>`;
+      // PERBAIKAN Word Lembar Kunci: Kolom skor kanan dihapus, Rubrik disatukan di bawah kunci
+      contentHtml += `<table class="spreadsheet-table"><tr><th width="40">No</th><th>Kunci Jawaban & Rubrik Penilaian</th></tr>${localQuestions.map(q => `<tr><td class="centered">${q.number}</td><td><b>KUNCI JAWABAN: ${formatAnswerKey(q.answerKey)}</b><br><br><b>RUBRIK PENILAIAN:</b><br><i>${(q as any).score || (q as any).rubrik || 'Skor 1 jika benar, 0 jika salah.'}</i><br><br><small>Level Kognitif: ${q.cognitiveLevel || 'MOTS'}</small></td></tr>`).join('')}</table>`;
     } else if (activeTab === 'kisi') {
       contentHtml += `<table class="spreadsheet-table"><tr><th>No</th><th>Capaian & Tujuan Pembelajaran</th><th>Indikator</th><th>Level</th><th>Bentuk</th></tr>${localKisiKisi.map(k => `<tr><td class="centered">${k.no}</td><td><b>CP:</b> ${formInput.cp}<br><b>TP:</b> ${k.tp || '-'}</td><td>${k.indikatorSoal}</td><td class="centered">${k.levelKognitif}</td><td class="centered">${k.bentukSoal}</td></tr>`).join('')}</table>`;
     }
@@ -199,7 +199,7 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
 
         <div className="flex items-center gap-2">
           <NavButton id="soal" icon={FileText} label="Evaluasi" />
-          <NavButton id="kunci" icon={Key} label="Kunci & Bahasan" />
+          <NavButton id="kunci" icon={Key} label="Kunci & Rubrik" />
           <NavButton id="kisi" icon={ClipboardCheck} label="Kisi-kisi" />
         </div>
 
@@ -328,34 +328,32 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
           <div className="space-y-8">
             <h3 className="text-lg font-bold border-b-2 border-citrus-200 pb-2 text-citrus-800 uppercase tracking-tighter">Kunci Jawaban & Rubrik Penilaian</h3>
             <table className="spreadsheet-table w-full">
-              {/* PERBAIKAN: Kolom bentuk dihapus, kolom Skor diletakkan di sebelah kanan */}
+              {/* PERBAIKAN TOTAL: Header disesuaikan, kolom skor kanan dihapus penuh */}
               <thead>
                 <tr>
                   <th className="w-16 text-center">No</th>
-                  <th>Kunci & Pembahasan</th>
-                  <th className="w-28 text-center">Skor / Rubrik</th>
+                  <th>Kunci Jawaban & Rubrik Penilaian</th>
                 </tr>
               </thead>
               <tbody>
                 {localQuestions.map((q) => (
                   <tr key={q.number}>
-                    <td className="text-center font-bold font-mono">{q.number}</td>
+                    <td className="text-center font-bold font-mono vertical-align-top pt-4">{q.number}</td>
                     <td>
-                      <div className="space-y-2">
+                      <div className="space-y-3 p-2">
                         <div className="flex items-start gap-2">
-                          <span className="text-xs font-bold bg-citrus-500 text-white px-2 py-0.5 rounded">KUNCI</span>
+                          <span className="text-xs font-bold bg-citrus-500 text-white px-2 py-0.5 rounded shrink-0">KUNCI</span>
                           <p className="font-bold text-citrus-900">{formatAnswerKey(q.answerKey)}</p>
                         </div>
-                        <div className="flex items-start gap-2 bg-slate-50 p-3 rounded-lg border">
-                          <p className="text-sm text-slate-600 italic whitespace-pre-wrap">{q.explanation || 'Pembahasan sedang dimuat...'}</p>
+                        
+                        <div className="bg-slate-50 p-4 rounded-lg border space-y-2">
+                          <p className="text-xs font-bold text-slate-700 uppercase tracking-wider border-b pb-1">Rubrik Penilaian:</p>
+                          <p className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">
+                            {(q as any).score || (q as any).rubrik || "Skor 1 jika murid menjawab dengan tepat. Skor 0 jika salah/kosong."}
+                          </p>
                         </div>
+                        
                         <p className="text-[10px] text-citrus-600 font-bold uppercase">Level Kognitif: {q.cognitiveLevel}</p>
-                      </div>
-                    </td>
-                    {/* PERBAIKAN: Skor dibaca langsung dari parameter respons AI (q.score atau q.rubrik jika isian/uraian kompleks) */}
-                    <td className="text-center font-bold text-slate-800 text-xs p-2 bg-slate-50/50">
-                      <div className="whitespace-pre-wrap leading-relaxed">
-                        {(q as any).score || (q as any).rubrik || "1"}
                       </div>
                     </td>
                   </tr>
@@ -403,7 +401,7 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
           <table className="signature-table mt-20 no-border w-full">
             <tbody>
               <tr>
-                <td className="text-left align-top"><p>Mengetahui,</p><p>Kepala Sekolah</p><div className="h-24"></div><p className="font-bold underline">{formInput.principalName}</p><p>NIP. ${formInput.principalNip}</p></td>
+                <td className="text-left align-top"><p>Mengetahui,</p><p>Kepala Sekolah</p><div className="h-24"></div><p className="font-bold underline">{formInput.principalName}</p><p>NIP. {formInput.principalNip}</p></td>
                 <td className="text-left align-top"><p>{formInput.regionName}, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p><p>{formInput.position}</p><div className="h-24"></div><p className="font-bold underline">{formInput.teacherName}</p><p>NIP. {formInput.teacherNip}</p></td>
               </tr>
             </tbody>
