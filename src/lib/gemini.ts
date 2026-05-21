@@ -39,8 +39,8 @@ async function fetchSecureWithRetry(url: string, options: any, retries = 3, back
   }
 }
 
-// Teks instruksi kustom agar Gemini patuh mengganti istilah ke "murid"
-const CUSTOM_INSTRUCTION = "PENTING: Gunakan selalu kata 'murid' untuk merujuk pada anak didik. Jangan pernah menggunakan istilah 'peserta didik' di dalam teks output yang Anda hasilkan.";
+// PERBAIKAN: Menambahkan instruksi pemisahan rubrik penilaian ke parameter 'score' secara otomatis oleh AI
+const CUSTOM_INSTRUCTION = "PENTING: Gunakan selalu kata 'murid' untuk merujuk pada anak didik. Jangan pernah menggunakan istilah 'peserta didik' di dalam teks output yang Anda hasilkan. WAJIB: Pisahkan rubrik penilaian dari kolom pembahasan! Jangan gabungkan rubrik penilaian ke dalam bidang 'explanation'. Masukkan rincian rubrik penilaian atau pembobotan skor tersebut secara spesifik ke dalam properti atau field JSON bernama 'score' pada setiap objek soal.";
 
 // 1. HANYA GENERATE SOAL UTAMA (Dengan Proteksi Auto-Retry)
 export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoal> {
