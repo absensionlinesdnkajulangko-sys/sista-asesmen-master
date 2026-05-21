@@ -39,15 +39,15 @@ async function fetchSecureWithRetry(url: string, options: any, retries = 3, back
   }
 }
 
-// PERBAIKAN TOTAL: Mengembalikan Pembahasan Terperinci dan Mempertahankan Rubrik Penilaian Ketat
+// PERBAIKAN KRITIKAL: Memaksa Gemini membuat kriteria logika skor bergradasi (bukan angka 1 konstan) untuk Uraian
 const CUSTOM_INSTRUCTION = `PENTING: Gunakan selalu kata 'murid' untuk merujuk pada anak didik. Jangan pernah menggunakan istilah 'peserta didik' di dalam teks output yang Anda hasilkan.
 
-STRICT RULE - PEMBAHASAN DAN SKOR/RUBRIK WAJIB DIISI SECARA TERPISAH:
-1. Kolom Pembahasan ('explanation'): Wajib diisi dengan penjelasan ilmiah, langkah penyelesaian, atau analisis rasional mengapa kunci jawaban tersebut benar. Jangan mengosongkan kolom ini.
-2. Kolom Skor ('score'): Jangan letakkan penjelasan materi di sini! Properti ini khusus diisi dengan format string tegas yang mencantumkan kalkulasi skor maksimal riil beserta panduan kriteria penilaian sebagai berikut:
+STRICT RULE - PEMBAHASAN DAN LOGIKA SKOR/RUBRIK WAJIB TERPISAH:
+1. Kolom Pembahasan ('explanation'): Wajib diisi dengan analisis ilmiah, langkah penyelesaian matematis/logis, atau penjelasan teoritis mengapa kunci jawaban tersebut benar.
+2. Kolom Skor ('score'): JANGAN PERNAH mengisi skor konstan 1 untuk tipe soal non-objektif! Properti ini HARUS diisi dengan kalkulasi bergradasi mengikuti format string wajib berikut:
 "Skor Maksimal: [Angka_Skor]\n\nRubrik Penilaian:\n[Detail_Aturan_Penilaian]"
 
-Ketentuan Perhitungan Nilai & Isi Rubrik Berdasarkan Bentuk Soal:
+Ketentuan Perhitungan Nilai & Logika Rubrik Berdasarkan Bentuk Soal:
 
 1. Pilihan Ganda (PG)
    - Aturan: Skor maksimal selalu 1.
@@ -69,9 +69,17 @@ Ketentuan Perhitungan Nilai & Isi Rubrik Berdasarkan Bentuk Soal:
    - Aturan: Skor maksimal selalu 2.
    - Format isi 'score': "Skor Maksimal: 2\n\nRubrik Penilaian:\n- Skor 2: Jawaban murid mutlak benar sesuai kata kunci utama.\n- Skor 1: Jawaban murid mendekati benar atau kurang lengkap.\n- Skor 0: Jawaban salah atau kosong."
 
-6. Uraian
-   - Aturan: Berikan bobot skor maksimal antara rentang 3 s.d 5 secara objektif melihat tingkat kesulitan soal.
-   - Format isi 'score': "Skor Maksimal: [Pilih_3_Sampai_5]\n\nRubrik Penilaian:\n- Skor [Maks]: Konsep, analisis, dan langkah penyelesaian murid ditulis sempurna.\n- Skor 2-3: Konsep dasar benar namun argumentasi/langkah kurang lengkap.\n- Skor 1: Hanya menuliskan dasar ide atau menulis ulang soal.\n- Skor 0: Jawaban salah atau tidak diisi sama sekali."`;
+6. Uraian (STRICT FIX - DILARANG MEMBERI SKOR 1!)
+   - Aturan: Berikan bobot skor maksimal antara rentang 4 sampai 5 secara objektif berdasarkan tingkat kesulitan analisis soal.
+   - Format isi 'score' WAJIB breakdown logika nilai seperti contoh ini:
+"Skor Maksimal: 4
+
+Rubrik Penilaian:
+- Skor 4: Murid menuliskan konsep, analisis argumentasi, dan langkah penyelesaian dengan sangat lengkap dan mutlak benar.
+- Skor 3: Murid memahami konsep dasar, sebagian besar argumen/langkah benar namun ada detail kecil yang terlewat.
+- Skor 2: Murid menjawab sebagian kecil dengan benar, namun kerangka berpikir atau hasil akhirnya kurang tepat.
+- Skor 1: Murid hanya menuliskan kata kunci dasar, menyalin ulang soal, atau memberikan ide mentah yang tidak selesai.
+- Skor 0: Jawaban murid salah total atau tidak diisi sama sekali."`;
 
 // 1. HANYA GENERATE SOAL UTAMA (Dengan Proteksi Auto-Retry)
 export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoal> {
