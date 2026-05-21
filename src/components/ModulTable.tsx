@@ -51,8 +51,18 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
     }
   };
 
-  // Ambil materi pokok secara aman (prioritaskan hasil generate AI, jika kosong gunakan input form)
-  const currentMaterial = data?.header?.material || formInput.material || "Materi Pokok";
+  // PERBAIKAN: Ambil materi pokok secara aman karena formInput.material kini berbentuk Array
+  const getMaterialString = () => {
+    if (data?.header?.material && typeof data.header.material === 'string') {
+      return data.header.material;
+    }
+    if (Array.isArray(formInput.material)) {
+      return formInput.material.filter(m => m.trim() !== '').join(', ') || "Materi Pokok";
+    }
+    return formInput.material || "Materi Pokok";
+  };
+  
+  const currentMaterial = getMaterialString();
 
   const downloadWord = () => {
     if (!containerRef.current) return;
