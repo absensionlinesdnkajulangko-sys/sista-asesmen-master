@@ -121,7 +121,7 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
             <b>NAMA GURU</b>: ${formInput.teacherName}<br>
             <b>NIP GURU</b>: ${formInput.teacherNip}<br>
             <b>JABATAN</b>: ${formInput.position}<br>
-            <b>ALOKASI WAKTU</b>: ${data?.header?.timeLimit || '60 Menit'}
+            <b>ALOKASI WAKTU</b>: ${formInput.timeAllocation || data?.header?.timeLimit || '60 Menit'}
           </td>
         </tr>
       </table>
@@ -431,7 +431,7 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
             <p><span className="font-bold w-32 inline-block uppercase">Nama Guru</span>: {formInput.teacherName}</p>
             <p><span className="font-bold w-32 inline-block uppercase">NIP Guru</span>: {formInput.teacherNip}</p>
             <p><span className="font-bold w-32 inline-block uppercase">Jabatan</span>: {formInput.position}</p>
-            <p><span className="font-bold w-32 inline-block uppercase">Alokasi Waktu</span>: {data?.header?.timeLimit || '60 Menit'}</p>
+            <p><span className="font-bold w-32 inline-block uppercase">Alokasi Waktu</span>: {formInput.timeAllocation || data?.header?.timeLimit || '60 Menit'}</p>
           </div>
         </div>
 
