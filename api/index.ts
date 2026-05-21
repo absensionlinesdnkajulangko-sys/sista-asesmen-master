@@ -48,7 +48,7 @@ app.post("/api/generate", async (req, res) => {
       DATA INPUT:
       - Satuan Pendidikan: ${data.schoolName}
       - Mapel: ${data.subject}
-      - Materi Pokok / Utama: ${data.material || "AI Tentukan Otomatis"}
+      - Materi Pokok / Utama: ${Array.isArray(data.material) ? data.material.join(", ") : data.material}
       - Capaian Pembelajaran (CP): ${data.cp}
       - Kelas/Semester: ${data.grade} / ${data.semester}
       - Tahun Ajaran: ${data.academicYear}
