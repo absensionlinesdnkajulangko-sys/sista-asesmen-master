@@ -39,39 +39,38 @@ async function fetchSecureWithRetry(url: string, options: any, retries = 3, back
   }
 }
 
-// PERBAIKAN STRATEGIS: Mengoptimalkan instruksi perhitungan skor riil dan rubrik deskriptif per jenis soal
+// PERBAIKAN TOTAL: Memaksa AI mematuhi format strict JSON property 'score' untuk menjamin konsistensi nilai skor
 const CUSTOM_INSTRUCTION = `PENTING: Gunakan selalu kata 'murid' untuk merujuk pada anak didik. Jangan pernah menggunakan istilah 'peserta didik' di dalam teks output yang Anda hasilkan.
 
-WAJIB PISAHKAN RUBRIK DARI BAHASAN: Jangan mencampur informasi pembobotan skor atau rubrik ke dalam properti 'explanation'. Properti 'explanation' HANYA berisi pembahasan materi jawaban. Seluruh rincian nilai wajib dimasukkan ke properti 'score'.
+STRICT RULE - KOLOM SKOR WAJIB DIISI KONSISTEN:
+Anda wajib memisahkan rubrik penilaian dari kolom pembahasan. Jangan letakkan aturan poin/skor di properti 'explanation'. Setiap objek soal dalam array 'questions' HARUS memiliki properti 'score' yang diisi secara otomatis dengan format string wajib sebagai berikut:
+"Skor Maksimal: [Angka_Skor]\n\nRubrik:\n[Detail_Aturan_Penilaian]"
 
-ATURAN STRUKTUR & KALKULASI DINAMIS PADA FIELD "score":
-Isi dari properti 'score' pada JSON setiap soal harus diawali dengan angka riil total skor hasil kalkulasi nyata Anda, diikuti oleh rincian rubriknya dengan format visual yang rapi:
-"Skor Maksimal: [Angka Hasil Hitung Nyata]\n\nRubrik Penilaian:\n- ..."
+Ketentuan Perhitungan Nilai & Isi Rubrik Berdasarkan Bentuk Soal:
 
-Ketentuan Perhitungan & Penulisan Rubrik per Bentuk Soal:
-1. Pilihan Ganda:
-   - Wajib ditulis: "Skor Maksimal: 1"
-   - Rubrik: "Skor 1 jika murid memilih satu opsi kunci jawaban dengan tepat. Skor 0 jika jawaban salah atau kosong."
+1. Pilihan Ganda (PG)
+   - Aturan: Skor maksimal selalu 1.
+   - Format isi 'score': "Skor Maksimal: 1\n\nRubrik:\n- Skor 1: Murid memilih satu opsi jawaban benar dengan tepat.\n- Skor 0: Murid memilih opsi yang salah atau tidak menjawab."
 
-2. Pilihan Ganda Kompleks:
-   - Evaluasi jumlah opsi benar pada soal tersebut! Jika opsi yang benar ada 2, wajib ditulis: "Skor Maksimal: 2". Jika opsi benar ada 3, wajib ditulis: "Skor Maksimal: 3".
-   - Rubrik: "Skor maksimal menyesuaikan total kunci jawaban benar ([Jumlah Opsi Benar] poin). Setiap 1 opsi benar yang dipilih murid mendapatkan 1 poin. Salah pilih opsi mendapat 0 poin."
+2. Pilihan Ganda Kompleks (PGK)
+   - Aturan: Hitung jumlah opsi yang benar pada soal ini. Jika ada 2 opsi benar, maka skor maksimal 2. Jika ada 3 opsi benar, skor maksimal 3.
+   - Format isi 'score': "Skor Maksimal: [Tulis_Jumlah_Opsi_Benar_Di_Sini]\n\nRubrik:\n- Nilai diberikan proporsional (1 poin untuk setiap opsi benar yang dipilih dengan tepat).\n- Salah memilih opsi atau tidak memilih mendapat 0 poin."
 
-3. Benar Salah:
-   - Wajib ditulis: "Skor Maksimal: 1"
-   - Rubrik: "Skor 1 jika murid tepat menentukan pernyataan Benar/Salah sesuai kunci. Skor 0 jika salah menentukan."
+3. Benar Salah (BS)
+   - Aturan: Skor maksimal selalu 1 per pernyataan.
+   - Format isi 'score': "Skor Maksimal: 1\n\nRubrik:\n- Skor 1: Murid tepat menentukan posisi Benar/Salah sesuai kunci.\n- Skor 0: Murid salah menentukan pilihan."
 
-4. Menjodohkan:
-   - Hitung total pasangan (matching pairs) yang tersedia di dalam soal tersebut! Jika ada 3 baris pasangan, wajib ditulis: "Skor Maksimal: 3".
-   - Rubrik: "Skor maksimal dinamis berdasarkan jumlah pasangan ([Jumlah Pasangan] poin). Setiap baris hubungan pernyataan yang dijodohkan dengan benar oleh murid mendapatkan 1 poin."
+4. Menjodohkan
+   - Aturan: Hitung jumlah baris pasangan (matching pairs) yang ada di dalam soal ini. Jika ada 3 pasangan, maka skor maksimal wajib 3.
+   - Format isi 'score': "Skor Maksimal: [Tulis_Jumlah_Pasangan_Di_Sini]\n\nRubrik:\n- Murid mendapatkan 1 poin untuk setiap pasangan baris yang dihubungkan dengan benar.\n- Skor 0 jika menjodohkan ke pasangan yang salah."
 
-5. Isian Singkat:
-   - Wajib ditulis: "Skor Maksimal: 2"
-   - Rubrik: "Skor 2 jika jawaban murid mutlak benar dan sesuai kata kunci utama. Skor 1 jika jawaban mendekati benar atau kurang lengkap. Skor 0 jika jawaban salah total/kosong."
+5. Isian Singkat
+   - Aturan: Skor maksimal selalu 2.
+   - Format isi 'score': "Skor Maksimal: 2\n\nRubrik:\n- Skor 2: Jawaban murid mutlak benar sesuai kata kunci utama.\n- Skor 1: Jawaban murid mendekati benar/kurang lengkap.\n- Skor 0: Jawaban salah atau kosong."
 
-6. Uraian:
-   - Tentukan skor maksimal antara rentang 3 sampai 5 poin berdasarkan tingkat kedalaman berpikir soal. Contoh: "Skor Maksimal: 4".
-   - Rubrik: Tuliskan rincian gradasi pencapaian nilai secara eksplisit (misal: "Skor 4 jika konsep dan analisis murid sempurna; Skor 3 jika konsep benar namun argumen kurang tajam; Skor 2 jika jawaban sebatas kulit luar materi; Skor 1 jika hanya menuliskan dasar ide; Skor 0 jika kosong").`;
+6. Uraian
+   - Aturan: Berikan bobot skor maksimal antara rentang 3 s.d 5 secara objektif melihat tingkat kesulitan soal.
+   - Format isi 'score': "Skor Maksimal: [Pilih_3_Sampai_5]\n\nRubrik:\n- Skor [Maks]: Konsep, analisis, dan langkah penyelesaian murid ditulis sempurna.\n- Skor 2-3: Konsep dasar benar namun argumentasi/langkah kurang lengkap.\n- Skor 1: Hanya menuliskan dasar ide atau menulis ulang soal.\n- Skor 0: Jawaban salah atau tidak diisi sama sekali."`;
 
 // 1. HANYA GENERATE SOAL UTAMA (Dengan Proteksi Auto-Retry)
 export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoal> {
