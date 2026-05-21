@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Plus, Minus, School, User as UserIcon, Briefcase, GraduationCap, Calendar, BookOpen, Layers, Target, ClipboardList, Trash2, AlertTriangle } from 'lucide-react';
+// MENAMBAHKAN ICON Clock DI SINI
+import { Plus, Minus, School, User as UserIcon, Briefcase, GraduationCap, Calendar, BookOpen, Layers, Target, ClipboardList, Trash2, AlertTriangle, Clock } from 'lucide-react';
 import { SoalFormData, QuestionType, QuestionConfig } from '../types';
 import { NavItem } from './Sidebar';
 import { cn } from '../lib/utils';
@@ -59,6 +60,7 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
       grade: '',
       semester: 'I / Ganjil',
       subject: '',
+      timeAllocation: '', // 1. MENAMBAHKAN STATE DEFAULT UNTUK ALOKASI WAKTU
       material: [''], // Menggunakan array untuk mendukung multi-materi
       cp: '',
       withImages: true,
@@ -97,6 +99,7 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
         ...prev,
         grade: '',
         subject: '',
+        timeAllocation: '', // 2. MENAMBAHKAN RESET STATE JIKA MODE BERUBAH
         material: [''],
         cp: ''
       }));
@@ -249,9 +252,24 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
           </div>
         </div>
         
-        <div className="space-y-2">
-          <label className={labelClass}><BookOpen className="w-4 h-4"/> Mata Pelajaran</label>
-          <input name="subject" value={formData.subject} onChange={handleChange} className={inputClass} required />
+        {/* 3. MENGUBAH LAYOUT MATA PELAJARAN MENJADI GRID 2 KOLOM UNTUK MENAMPUNG ALOKASI WAKTU */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className={labelClass}><BookOpen className="w-4 h-4"/> Mata Pelajaran</label>
+            <input name="subject" value={formData.subject} onChange={handleChange} className={inputClass} required />
+          </div>
+          
+          <div className="space-y-2">
+            <label className={labelClass}><Clock className="w-4 h-4"/> Alokasi Waktu</label>
+            <input 
+              name="timeAllocation" 
+              value={formData.timeAllocation || ''} 
+              onChange={handleChange} 
+              className={inputClass} 
+              placeholder="Contoh: 90 Menit" 
+              required 
+            />
+          </div>
         </div>
 
         <div className="space-y-2">
