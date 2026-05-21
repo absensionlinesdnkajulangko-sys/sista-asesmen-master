@@ -27,51 +27,21 @@ export default function App() {
     setFormData(null);
   };
 
+  // PERBAIKAN: Berfungsi normal memanggil wrapper baru yang telah disesuaikan rutenya
   const handleSubmit = async (data: SoalFormData) => {
-  setIsLoading(true);
-  setFormData(data);
-  try {
-    // 1. Generate Soal
-    const resSoal = await fetch('/api/generate/soal', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    if (!resSoal.ok) throw new Error("Gagal generate soal");
-    const dataSoal = await resSoal.json();
+    setIsLoading(true);
+    setFormData(data);
+    try {
+      const result = await generateSoal(data);
+      setGeneratedSoal(result);
+    } catch (error: any) {
+      alert(error.message || "Terjadi kesalahan saat generate soal. Silakan coba lagi.");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    // 2. Generate Kunci
-    const resKunci = await fetch('/api/generate/kunci', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ header: dataSoal.header, questions: dataSoal.questions })
-    });
-    if (!resKunci.ok) throw new Error("Gagal generate kunci");
-    const dataKunci = await resKunci.json();
-
-    // 3. Generate Kisi-kisi
-    const resKisi = await fetch('/api/generate/kisi-kisi', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ formInput: data, questions: dataSoal.questions })
-    });
-    if (!resKisi.ok) throw new Error("Gagal generate kisi-kisi");
-    const dataKisi = await resKisi.json();
-
-    // Gabungkan hasilnya
-    setGeneratedSoal({
-      header: dataSoal.header,
-      questions: dataKunci.questions,
-      kisiKisi: dataKisi.kisiKisi
-    });
-    
-  } catch (error) {
-    alert("Terjadi kesalahan koneksi ke AI. Pastikan server backend berjalan.");
-    console.error(error);
-  } finally {
-    setIsLoading(false);
-  }
-};
   if (!isLoggedIn) {
     return <Login onLogin={handleLogin} />;
   }
@@ -133,7 +103,7 @@ export default function App() {
                 <div className="w-10 h-10 rounded-xl bg-citrus-50 text-citrus-600 flex items-center justify-center font-bold mb-4">2</div>
                 <h4 className="font-bold text-slate-900 mb-2">Isi Identitas & Kurikulum</h4>
                 <p className="text-sm text-slate-600 leading-relaxed">
-                  Lengkapi data satuan pendidikan, guru, dan kepala sekolah. Masukkan Capaian Pembelajaran (CP) dan Tujuan Pembelajaran (TP) yang ingin diukur.
+                  Lengkapi data satuan pendidikan, guru, and kepala sekolah. Masukkan Capaian Pembelajaran (CP) dan Tujuan Pembelajaran (TP) yang ingin diukur.
                 </p>
               </div>
 
@@ -195,7 +165,6 @@ export default function App() {
       );
     }
 
-    // Default to Generator Form for all other tabs (simplification for this turn)
     return (
       <div className="space-y-8 animate-in fade-in slide-in-from-left-4 duration-500">
         <div className="flex flex-col space-y-2 mb-10">
