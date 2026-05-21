@@ -28,19 +28,50 @@ export default function App() {
   };
 
   const handleSubmit = async (data: SoalFormData) => {
-    setIsLoading(true);
-    setFormData(data);
-    try {
-      const result = await generateSoal(data);
-      setGeneratedSoal(result);
-    } catch (error) {
-      alert("Terjadi kesalahan saat generate soal. Silakan coba lagi.");
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  setIsLoading(true);
+  setFormData(data);
+  try {
+    // 1. Generate Soal
+    const resSoal = await fetch('/api/generate/soal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!resSoal.ok) throw new Error("Gagal generate soal");
+    const dataSoal = await resSoal.json();
 
+    // 2. Generate Kunci
+    const resKunci = await fetch('/api/generate/kunci', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ header: dataSoal.header, questions: dataSoal.questions })
+    });
+    if (!resKunci.ok) throw new Error("Gagal generate kunci");
+    const dataKunci = await resKunci.json();
+
+    // 3. Generate Kisi-kisi
+    const resKisi = await fetch('/api/generate/kisi-kisi', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ formInput: data, questions: dataSoal.questions })
+    });
+    if (!resKisi.ok) throw new Error("Gagal generate kisi-kisi");
+    const dataKisi = await resKisi.json();
+
+    // Gabungkan hasilnya
+    setGeneratedSoal({
+      header: dataSoal.header,
+      questions: dataKunci.questions,
+      kisiKisi: dataKisi.kisiKisi
+    });
+    
+  } catch (error) {
+    alert("Terjadi kesalahan koneksi ke AI. Pastikan server backend berjalan.");
+    console.error(error);
+  } finally {
+    setIsLoading(false);
+  }
+};
   if (!isLoggedIn) {
     return <Login onLogin={handleLogin} />;
   }
