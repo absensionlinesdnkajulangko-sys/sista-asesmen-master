@@ -16,15 +16,15 @@ const QUESTION_TYPES: QuestionType[] = ['Pilihan Ganda', 'Pilihan Ganda Kompleks
 
 // KODE KEAMANAN / NAMA SEKOLAH YANG DIIZINKAN
 const ALLOWED_SCHOOLS = [
-  "SD Negeri Sumoli",
-  "SD NEGERI SUMOLI",
-  "SDN SUMOLI" // Anda bisa menambahkan lebih banyak di sini
+  "SD Negeri 1 Merdeka",
+  "SD NEGERI 1 MERDEKA",
+  "SDN 1 MERDEKA" // Anda bisa menambahkan lebih banyak di sini
 ];
 
 // KODE KEAMANAN / NAMA GURU YANG DIIZINKAN
 const ALLOWED_TEACHERS = [
-  "Widya Agista Eka Pradita, S.E",
-  "WIDYA AGISTA EKA PRADITA, S.E",
+  "Rista Kasaraeng, S.Pd",
+  "RISTA KASARAENG, S.Pd",
   "Fidhal" // Ganti atau tambahkan nama guru yang diizinkan di sini
 ];
 
