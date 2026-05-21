@@ -39,14 +39,24 @@ async function fetchSecureWithRetry(url: string, options: any, retries = 3, back
   }
 }
 
+// Teks instruksi kustom agar Gemini patuh mengganti istilah ke "murid"
+const CUSTOM_INSTRUCTION = "PENTING: Gunakan selalu kata 'murid' untuk merujuk pada anak didik. Jangan pernah menggunakan istilah 'peserta didik' di dalam teks output yang Anda hasilkan.";
+
 // 1. HANYA GENERATE SOAL UTAMA (Dengan Proteksi Auto-Retry)
 export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoal> {
   try {
     console.log("Memulai pembuatan soal utama saja...");
+    
+    // MENYISIPKAN INSTRUKSI KUSTOM KE DALAM DATA SEBELUM DIKIRIM KE BACKEND API
+    const payload = {
+      ...data,
+      customInstruction: CUSTOM_INSTRUCTION
+    };
+
     const dataSoal = await fetchSecureWithRetry('/api/generate/soal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
 
     return {
@@ -70,7 +80,11 @@ export async function generateKunciOnly(header: any, questions: any[]): Promise<
     const dataKunci = await fetchSecureWithRetry('/api/generate/kunci', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ header, questions }),
+      body: JSON.stringify({ 
+        header, 
+        questions,
+        customInstruction: CUSTOM_INSTRUCTION // Menyisipkan instruksi pada kunci jawaban
+      }),
     });
     return dataKunci.questions;
   } catch (error: any) {
@@ -89,7 +103,11 @@ export async function generateKisiOnly(formInput: SoalFormData, questions: any[]
     const dataKisi = await fetchSecureWithRetry('/api/generate/kisi-kisi', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ formInput, questions }),
+      body: JSON.stringify({ 
+        formInput, 
+        questions,
+        customInstruction: CUSTOM_INSTRUCTION // Menyisipkan instruksi pada kisi-kisi
+      }),
     });
     return dataKisi.kisiKisi;
   } catch (error: any) {
