@@ -114,6 +114,12 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
     return String(answerKey);
   };
 
+  // Helper untuk mengambil poin skor per item berdasarkan tipe soal dari konfigurasi formInput
+  const getQuestionScore = (type: string) => {
+    const config = formInput.questionConfigs?.find(c => c.type === type);
+    return config ? config.scorePerItem : 0;
+  };
+
   const downloadWord = () => {
     if (!containerRef.current) return;
     
@@ -153,7 +159,8 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
         contentHtml += `</div><br>`;
       }
     } else if (activeTab === 'kunci') {
-      contentHtml += `<table class="spreadsheet-table"><tr><th width="40">No</th><th width="80">Bentuk</th><th>Kunci & Pembahasan</th></tr>${localQuestions.map(q => `<tr><td class="centered">${q.number}</td><td class="centered">${q.type}</td><td><b>KUNCI: ${formatAnswerKey(q.answerKey)}</b><br><i>Bahasan: ${q.explanation || '-'}</i><br><small>Level: ${q.cognitiveLevel || 'MOTS'}</small></td></tr>`).join('')}</table>`;
+      // PERBAIKAN ekspor Word Lembar Kunci: Menghapus kolom bentuk, menambahkan kolom skor di kanan
+      contentHtml += `<table class="spreadsheet-table"><tr><th width="40">No</th><th>Kunci & Pembahasan</th><th width="60">Skor</th></tr>${localQuestions.map(q => `<tr><td class="centered">${q.number}</td><td><b>KUNCI: ${formatAnswerKey(q.answerKey)}</b><br><i>Bahasan: ${q.explanation || '-'}</i><br><small>Level: ${q.cognitiveLevel || 'MOTS'}</small></td><td class="centered">${getQuestionScore(q.type)}</td></tr>`).join('')}</table>`;
     } else if (activeTab === 'kisi') {
       contentHtml += `<table class="spreadsheet-table"><tr><th>No</th><th>Capaian & Tujuan Pembelajaran</th><th>Indikator</th><th>Level</th><th>Bentuk</th></tr>${localKisiKisi.map(k => `<tr><td class="centered">${k.no}</td><td><b>CP:</b> ${formInput.cp}<br><b>TP:</b> ${k.tp || '-'}</td><td>${k.indikatorSoal}</td><td class="centered">${k.levelKognitif}</td><td class="centered">${k.bentukSoal}</td></tr>`).join('')}</table>`;
     }
@@ -330,18 +337,32 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
           <div className="space-y-8">
             <h3 className="text-lg font-bold border-b-2 border-citrus-200 pb-2 text-citrus-800 uppercase tracking-tighter">Kunci Jawaban & Rubrik Penilaian</h3>
             <table className="spreadsheet-table w-full">
-              <thead><tr><th className="w-16 text-center">No</th><th className="w-32">Bentuk</th><th>Kunci & Pembahasan</th></tr></thead>
+              {/* PERBAIKAN komponen UI Lembar Kunci: Kolom bentuk dibuang, kolom skor ditambahkan di ujung kanan */}
+              <thead>
+                <tr>
+                  <th className="w-16 text-center">No</th>
+                  <th>Kunci & Pembahasan</th>
+                  <th className="w-20 text-center">Skor</th>
+                </tr>
+              </thead>
               <tbody>
                 {localQuestions.map((q) => (
                   <tr key={q.number}>
                     <td className="text-center font-bold font-mono">{q.number}</td>
-                    <td className="text-xs font-bold text-center"><span className="px-2 py-1 rounded bg-slate-100 border">{q.type}</span></td>
                     <td>
                       <div className="space-y-2">
-                        <div className="flex items-start gap-2"><span className="text-xs font-bold bg-citrus-500 text-white px-2 py-0.5 rounded">KUNCI</span><p className="font-bold text-citrus-900">{formatAnswerKey(q.answerKey)}</p></div>
-                        <div className="flex items-start gap-2 bg-slate-50 p-3 rounded-lg border"><p className="text-sm text-slate-600 italic whitespace-pre-wrap">{q.explanation || 'Pembahasan sedang dimuat...'}</p></div>
+                        <div className="flex items-start gap-2">
+                          <span className="text-xs font-bold bg-citrus-500 text-white px-2 py-0.5 rounded">KUNCI</span>
+                          <p className="font-bold text-citrus-900">{formatAnswerKey(q.answerKey)}</p>
+                        </div>
+                        <div className="flex items-start gap-2 bg-slate-50 p-3 rounded-lg border">
+                          <p className="text-sm text-slate-600 italic whitespace-pre-wrap">{q.explanation || 'Pembahasan sedang dimuat...'}</p>
+                        </div>
                         <p className="text-[10px] text-citrus-600 font-bold uppercase">Level Kognitif: {q.cognitiveLevel}</p>
                       </div>
+                    </td>
+                    <td className="text-center font-bold text-slate-800 font-mono text-sm">
+                      {getQuestionScore(q.type)}
                     </td>
                   </tr>
                 ))}
