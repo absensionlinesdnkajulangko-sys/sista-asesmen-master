@@ -20,7 +20,8 @@ export interface SoalFormData {
   grade: string;
   semester: string;
   subject: string;
-  material: string;
+  timeAllocation: string; // 1. MENAMBAHKAN FIELD ALOKASI WAKTU
+  material: string[];     // 2. MENGUBAH STRING MENJADI ARRAY STRING
   cp: string; 
   tp: string[];
   withImages?: boolean;
@@ -58,7 +59,7 @@ export interface GeneratedSoal {
     subject: string;
     classSemester: string;
     material?: string;
-    timeLimit: string;
+    timeLimit: string; // Properti ini nantinya bisa Anda petakan dari formData.timeAllocation saat melakukan generate
   };
   questions: QuestionItem[];
   kisiKisi: KisiKisiItem[];
