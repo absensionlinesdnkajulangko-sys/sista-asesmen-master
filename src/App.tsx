@@ -32,7 +32,7 @@ export default function App() {
     setIsLoading(true);
     setFormData(data);
     try {
-      const result = await generateSoal(data);
+      const result = await generateSoalOnly(data);
       setGeneratedSoal(result);
     } catch (error: any) {
       alert(error.message || "Terjadi kesalahan saat generate soal. Silakan coba lagi.");
