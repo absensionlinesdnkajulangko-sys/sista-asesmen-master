@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Send, Plus, Minus, School, User as UserIcon, Briefcase, GraduationCap, Calendar, BookOpen, Layers, Target, ClipboardList, Trash2, AlertTriangle } from 'lucide-react';
+import { Plus, Minus, School, User as UserIcon, Briefcase, GraduationCap, Calendar, BookOpen, Layers, Target, ClipboardList, AlertTriangle } from 'lucide-react';
 import { SoalFormData, QuestionType, QuestionConfig } from '../types';
 import { NavItem } from './Sidebar';
 import { cn } from '../lib/utils';
@@ -18,14 +18,14 @@ const QUESTION_TYPES: QuestionType[] = ['Pilihan Ganda', 'Pilihan Ganda Kompleks
 const ALLOWED_SCHOOLS = [
   "SD Negeri 1 Merdeka",
   "SD NEGERI 1 MERDEKA",
-  "SDN 1 MERDEKA" // Anda bisa menambahkan lebih banyak di sini
+  "SDN 1 MERDEKA"
 ];
 
 // KODE KEAMANAN / NAMA GURU YANG DIIZINKAN
 const ALLOWED_TEACHERS = [
   "Rista Kasaraeng, S.Pd",
   "RISTA KASARAENG, S.Pd",
-  "Fidhal" // Ganti atau tambahkan nama guru yang diizinkan di sini
+  "Fidhal"
 ];
 
 export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFormProps) {
@@ -53,7 +53,6 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
       subject: '',
       material: '',
       cp: '',
-      tp: [''],
       withImages: true,
       questionConfigs: [{ type: 'Pilihan Ganda', count: 5, optionCount: 4, scorePerItem: 1 }],
       cognitiveLevel: ['MOTS']
@@ -62,7 +61,7 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
 
   // Validasi status lisensi sekolah
   const isSchoolValid = ALLOWED_SCHOOLS.some(
-  (school) => school.toLowerCase() === formData.schoolName.trim().toLowerCase()
+    (school) => school.toLowerCase() === formData.schoolName.trim().toLowerCase()
   );
   const isTeacherValid = ALLOWED_TEACHERS.some(
     (teacher) => teacher.toLowerCase() === formData.teacherName.trim().toLowerCase()
@@ -87,8 +86,7 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
         grade: '',
         subject: '',
         material: '',
-        cp: '',
-        tp: ['']
+        cp: ''
       }));
     }
   }, [mode]);
@@ -101,20 +99,6 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
-  };
-
-  const handleAddTP = () => {
-    setFormData(prev => ({ ...prev, tp: [...prev.tp, ''] }));
-  };
-
-  const handleRemoveTP = (index: number) => {
-    setFormData(prev => ({ ...prev, tp: prev.tp.filter((_, i) => i !== index) }));
-  };
-
-  const handleTPChange = (index: number, value: string) => {
-    const newTP = [...formData.tp];
-    newTP[index] = value;
-    setFormData(prev => ({ ...prev, tp: newTP }));
   };
 
   const handleLevelToggle = (item: string) => {
@@ -149,7 +133,7 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isSchoolValid) return; // Mencegah submit lewat bypass enter key
+    if (!isSchoolValid) return;
     onSubmit(formData);
   };
 
@@ -178,7 +162,7 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
             <input name="teacherName" value={formData.teacherName} onChange={handleChange} required className={inputClass} placeholder="Nama Lengkap" />
           </div>
           <div className="space-y-2">
-            <label className={labelClass}>NIP Guru</label>
+            <label className={labelClass} >NIP Guru</label>
             <input name="teacherNip" value={formData.teacherNip} onChange={handleChange} required className={inputClass} placeholder="NIP" />
           </div>
           <div className="space-y-2">
@@ -248,43 +232,6 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
           <textarea name="cp" value={formData.cp} onChange={handleChange} className={cn(inputClass, "h-24 resize-none")} required placeholder="Tempelkan Capaian Pembelajaran dari Kurikulum Merdeka di sini" />
         </div>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <label className={labelClass}><Target className="w-4 h-4"/> Tujuan Pembelajaran (TP)</label>
-            <button 
-              type="button" 
-              onClick={handleAddTP}
-              className="text-[10px] font-bold bg-citrus-50 text-citrus-600 px-3 py-1 rounded-full border border-citrus-200 hover:bg-citrus-100 transition-colors"
-            >
-              + Tambah TP
-            </button>
-          </div>
-          <div className="space-y-3">
-            {formData.tp.map((tp, index) => (
-              <div key={index} className="flex gap-2">
-                <div className="flex-1">
-                  <input
-                    value={tp}
-                    onChange={(e) => handleTPChange(index, e.target.value)}
-                    className={cn(inputClass, "h-12")}
-                    required
-                    placeholder={`Tujuan Pembelajaran ${index + 1}`}
-                  />
-                </div>
-                {formData.tp.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveTP(index)}
-                    className="p-3 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
         <div className="space-y-2">
           <label className={labelClass}><ClipboardList className="w-4 h-4"/> Materi Utama (Materi Pokok)</label>
           <input 
@@ -292,9 +239,9 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
             value={formData.material} 
             onChange={handleChange} 
             className={inputClass} 
-            placeholder="Biarkan kosong agar AI menentukan otomatis" 
+            placeholder="Masukkan Materi Utama" 
+            required
           />
-          <p className="text-[9px] text-slate-400 italic">Jika dikosongkan, AI akan meringkas Materi Utama dari deskripsi TP Anda.</p>
         </div>
       </div>
 
