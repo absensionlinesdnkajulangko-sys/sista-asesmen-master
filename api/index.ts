@@ -42,7 +42,8 @@ const formatMaterialsHelper = (material: any) => {
 // ===================================================================
 app.post("/api/generate/soal", async (req, res) => {
   try {
-    const data = req.body;
+    // PERBAIKAN: Mengekstrak customInstruction yang dikirim oleh frontend
+    const { customInstruction, ...data } = req.body;
     const ai = getGeminiClient();
     
     const configs = data.questionConfigs.map((c: any) => 
@@ -55,6 +56,9 @@ app.post("/api/generate/soal", async (req, res) => {
       Bertindaklah sebagai Pakar Asesmen Kurikulum Merdeka dan Ahli Evaluasi Pendidikan Indonesia.
       Tugas Anda adalah memproduksi INSTRUMEN BUTIR SOAL SAJA berdasarkan data input berikut.
       
+      PANDUAN ATURAN BAHASA UTAMA:
+      ${customInstruction || "Gunakan istilah bahasa Indonesia yang baku."}
+
       DATA INPUT:
       - Satuan Pendidikan: ${data.schoolName}
       - Mapel: ${data.subject}
@@ -148,11 +152,15 @@ app.post("/api/generate/soal", async (req, res) => {
 // ===================================================================
 app.post("/api/generate/kunci", async (req, res) => {
   try {
-    const { header, questions } = req.body; // Menerima data soal hasil generate sebelumnya
+    // PERBAIKAN: Mengekstrak customInstruction dari request frontend
+    const { header, questions, customInstruction } = req.body; 
     const ai = getGeminiClient();
 
     const prompt = `
       Bertindaklah sebagai Pakar Evaluasi Pendidikan. Tugas Anda adalah menganalisis daftar instrumen soal di bawah ini dan merumuskan KUNCI JAWABAN yang valid beserta PEMBAHASAN/RUBRIK PENILAIAN yang mendalam untuk setiap butir soal.
+
+      PANDUAN ATURAN BAHASA UTAMA:
+      ${customInstruction || "Gunakan istilah bahasa Indonesia yang baku."}
 
       SOAL YANG HARUS DIBUATKAN KUNCI & BAHASAN:
       ${JSON.stringify(questions)}
@@ -211,13 +219,17 @@ app.post("/api/generate/kunci", async (req, res) => {
 // ===================================================================
 app.post("/api/generate/kisi-kisi", async (req, res) => {
   try {
-    const { formInput, questions } = req.body; 
+    // PERBAIKAN: Mengekstrak customInstruction dari request frontend
+    const { formInput, questions, customInstruction } = req.body; 
     const ai = getGeminiClient();
 
     const formattedMaterials = formatMaterialsHelper(formInput.material);
 
     const prompt = `
       Bertindaklah sebagai Penyusun Kurikulum Merdeka. Tugas Anda adalah memetakan dan membuat matriks KISI-KISI SOAL yang selaras sempurna dengan materi pokok, Capaian Pembelajaran (CP), dan butir soal yang sudah ada.
+
+      PANDUAN ATURAN BAHASA UTAMA:
+      ${customInstruction || "Gunakan istilah bahasa Indonesia yang baku."}
 
       DATA RUJUKAN:
       - CP Utama: ${formInput.cp}
@@ -227,7 +239,7 @@ app.post("/api/generate/kisi-kisi", async (req, res) => {
       TUGAS ANDA:
       1. Untuk setiap nomor soal di atas, buatkan baris kisi-kisi terperinci.
       2. Rumuskan "tp" (Tujuan Pembelajaran) yang logis, spesifik, dan operasional yang menjadi payung hukum dari materi soal tersebut.
-      3. Tulis "indikatorSoal" dengan rumusan kalimat baku (Contoh: "Disajikan teks cerita, peserta didik mampu menentukan..."). Indikator harus selaras dengan level kognitif soal asli.
+      3. Tulis "indikatorSoal" dengan rumusan kalimat baku (Contoh: "Disajikan teks cerita, murid mampu menentukan..."). Indikator harus selaras dengan level kognitif soal asli.
 
       STRUKTUR OUTPUT JSON WAJIB:
       {
