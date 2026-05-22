@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import GeneratorForm from './components/GeneratorForm';
+import GeneratorForm from './GeneratorForm';
 import ModulTable from './components/ModulTable';
 import Sidebar, { NavItem } from './components/Sidebar';
 import { SoalFormData, GeneratedSoal } from './types';
