@@ -65,18 +65,26 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
     }
   };
 
-  // PERBAIKAN: Fungsi generateImage yang menggunakan imagePrompt akurat & menyertakan konteks subjek pelajaran
+  // PERBAIKAN: Optimalisasi pembersihan prompt visual agar fokus pada objek soal
   const generateImage = async (questionNumber: number, questionObject: any) => {
     setIsGeneratingImage(prev => ({ ...prev, [questionNumber]: true }));
     try {
-      // Prioritaskan petunjuk visual imagePrompt hasil rumusan Gemini AI yang baru
-      const basePrompt = questionObject.imagePrompt || questionObject.stimulus || questionObject.text;
+      // 1. Ambil prompt dasar dari AI
+      let basePrompt = questionObject.imagePrompt || questionObject.stimulus || questionObject.text;
       
-      // Menggabungkan dengan mata pelajaran agar AI pembuat gambar mengenali konteks sains/sosial/matematika
-      const fullPrompt = `${basePrompt}, related to school subject ${formInput.subject}, educational textbook style, flat vector illustration, clean white background`;
+      // 2. Bersihkan kalimat pengantar khas soal Indonesia agar AI tidak bingung memunculkan objek manusia/murid
+      basePrompt = basePrompt
+        .replace(/Murid melihat/gi, '')
+        .replace(/Bapak\/Ibu Guru menunjukkan/gi, '')
+        .replace(/Perhatikan gambar/gi, '')
+        .replace(/di bawah ini/gi, '')
+        .replace(/dengan teliti/gi, '');
+
+      // 3. Gabungkan dengan penegasan style komik/buku cetak anak yang bersih tanpa teks acak
+      const fullPrompt = `${basePrompt.trim()}, clip art style for elementary school textbook, vibrant colors, clear object, isolated on a solid white background, no text, no characters, 2d vector`;
       const encodedPrompt = encodeURIComponent(fullPrompt);
       
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=800&height=450&nologo=true&seed=${Math.floor(Math.random() * 10000)}`;
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=800&height=450&nologo=true&seed=${Math.floor(Math.random() * 100000)}`;
       
       const img = new Image();
       img.src = imageUrl;
@@ -90,7 +98,7 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
       setIsGeneratingImage(prev => ({ ...prev, [questionNumber]: false }));
     }
   };
-
+  
   // Fungsi untuk menghapus gambar dari state internal
   const handleRemoveImage = (questionNumber: number) => {
     setGeneratedImages(prev => {
