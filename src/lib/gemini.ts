@@ -39,12 +39,14 @@ async function fetchSecureWithRetry(url: string, options: any, retries = 3, back
   }
 }
 
-// PERBAIKAN KRITIKAL: Memaksa Gemini membuat kriteria logika skor bergradasi, istilah 'murid', dan akurasi deskripsi gambar khusus (imagePrompt)
+// PERBAIKAN KRITIKAL: Memaksa Gemini membuat kriteria logika skor bergradasi, istilah 'murid', dan variasi acak untuk deskripsi gambar khusus (imagePrompt)
 const CUSTOM_INSTRUCTION = `PENTING: Gunakan selalu kata 'murid' untuk merujuk pada anak didik. Jangan pernah menggunakan istilah 'peserta didik' di dalam teks output yang Anda hasilkan.
 
-STRICT RULE - DESKRIPSI STIMULUS VISUAL KHUSUS:
-Setiap kali Anda merancang pertanyaan, Anda WAJIB menambahkan properti baru bernama 'imagePrompt' di dalam setiap objek soal. 
-Isi dari 'imagePrompt' harus berupa deskripsi gambar pendukung yang sangat spesifik, akurat, dan relevan dengan esensi soal tersebut dalam BAHASA INGGRIS. Jangan memasukkan teks pertanyaan ke dalamnya, melainkan deskripsikan objek visualnya secara jelas (contoh: jika soal matematika menghitung volume kubus, isi imagePrompt dengan "A clear 3D mathematical diagram of a single cube with side measurements written on it").
+STRICT RULE - PEMILIHAN STIMULUS VISUAL OTOMATIS SECARA ACAK:
+Setiap kali Anda merancang pertanyaan, Anda WAJIB melakukan hal berikut secara acak:
+1. Lakukan pemilihan acak secara internal: Berikan peluang sekitar 30% hingga 40% bagi sebuah soal untuk memiliki stimulus visual (membutuhkan gambar), dan sisanya adalah soal berbasis teks murni.
+2. JIKA SOAL TERPILIH MEMILIKI GAMBAR: Tambahkan properti 'imagePrompt' di dalam objek soal. Isi dari 'imagePrompt' harus berupa deskripsi gambar pendukung yang sangat spesifik, akurat, dan relevan dengan esensi soal tersebut dalam BAHASA INGGRIS. Jangan memasukkan teks pertanyaan ke dalamnya, melainkan deskripsikan objek visualnya secara jelas (contoh: "A clear 3D mathematical diagram of a single cube with side measurements written on it").
+3. JIKA SOAL TIDAK MEMILIKI GAMBAR: JANGAN menambahkan properti 'imagePrompt' ke dalam objek soal tersebut (atau isi nilainya dengan null/string kosong).
 
 STRICT RULE - PEMBAHASAN DAN LOGIKA SKOR/RUBRIK WAJIB TERPISAH:
 1. Kolom Pembahasan ('explanation'): Wajib diisi dengan analisis ilmiah, langkah penyelesaian matematis/logis, atau penjelasan teoritis mengapa kunci jawaban tersebut benar.
