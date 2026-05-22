@@ -206,8 +206,8 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-32">
-      {/* PERBAIKAN CSS PRINT: Menambahkan styling penentu agar tabel identitas cetak tetap simetris kiri-kanan */}
-      <style dangerouslySetInnerHTML={{ __html: `@media print { .no-print, button, header, nav, aside, footer, .sticky { display: none !important; } body, main, #root { background: white !important; padding: 0 !important; margin: 0 !important; width: 100% !important; } .print-container { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; } table, .spreadsheet-table { width: 100% !important; border-collapse: collapse !important; } .spreadsheet-table th, .spreadsheet-table td { border: 1px solid #000000 !important; padding: 6px !important; font-size: 10pt !important; } .no-wrap-print { white-space: nowrap !important; } .print-only-header { display: block !important; } .screen-only-header { display: none !important; } .print-forced-row { display: block !important; } .print-identity-table { display: table !important; width: 100% !important; border: 1px solid #000 !important; border-collapse: collapse !important; } .print-identity-table td { border: 1px solid #000 !important; padding: 6px !important; width: 50% !important; vertical-align: top !important; } .screen-identity-grid { display: none !important; } } .print-only-header, .print-identity-table { display: none; }`}} />
+      {/* PERBAIKAN CSS PRINT: Memperkecil font tabel identitas utama menjadi 9pt khusus saat diprint agar muat 1 baris lurus */}
+      <style dangerouslySetInnerHTML={{ __html: `@media print { .no-print, button, header, nav, aside, footer, .sticky { display: none !important; } body, main, #root { background: white !important; padding: 0 !important; margin: 0 !important; width: 100% !important; } .print-container { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; } table, .spreadsheet-table { width: 100% !important; border-collapse: collapse !important; } .spreadsheet-table th, .spreadsheet-table td { border: 1px solid #000000 !important; padding: 6px !important; font-size: 10pt !important; } .no-wrap-print { white-space: nowrap !important; } .print-only-header { display: block !important; } .screen-only-header { display: none !important; } .print-forced-row { display: block !important; } .print-identity-table { display: table !important; width: 100% !important; border: 1px solid #000 !important; border-collapse: collapse !important; font-size: 9pt !important; } .print-identity-table td { border: 1px solid #000 !important; padding: 5px !important; width: 50% !important; vertical-align: top !important; line-height: 1.3 !important; } .screen-identity-grid { display: none !important; } } .print-only-header, .print-identity-table { display: none; }`}} />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 no-print bg-white/80 backdrop-blur-md p-4 rounded-[1.5rem] border border-citrus-100 sticky top-4 z-40 shadow-xl shadow-citrus-900/5">
         <button onClick={onBack} className="flex items-center gap-2 text-citrus-700 font-bold hover:text-citrus-900 transition-colors px-4 py-2">
@@ -254,7 +254,6 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
           <p className="text-sm font-medium mt-1">TAHUN AJARAN {formInput.academicYear}</p>
         </div>
 
-        {/* PERBAIKAN STRUKTUR: Memisahkan tampilan Grid (Monitor) dan tampilan Table (Kertas Print) agar posisi kolom terkunci sempurna */}
         {/* 1. Tampilan Grid khusus untuk Layar Monitor */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-1 mb-8 text-[10px] md:text-xs border border-black p-4 screen-identity-grid">
           <div className="space-y-1">
@@ -271,21 +270,21 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
           </div>
         </div>
 
-        {/* 2. Tampilan Tabel khusus untuk Kertas Cetak Fisik (Akan muncul menggantikan grid saat di-print) */}
-        <table className="print-identity-table text-xs mb-8">
+        {/* 2. Tampilan Tabel khusus untuk Kertas Cetak Fisik dengan label yang ringkas */}
+        <table className="print-identity-table mb-8">
           <tbody>
             <tr>
               <td>
-                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '120px', display: 'inline-block' }}>SATUAN PENDIDIKAN</span>: {formInput.schoolName}</p>
-                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '120px', display: 'inline-block' }}>MATA PELAJARAN</span>: {formInput.subject}</p>
-                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '120px', display: 'inline-block' }}>KELAS / SEMESTER</span>: {formInput.grade} / {formInput.semester}</p>
-                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '120px', display: 'inline-block' }}>MATERI POKOK</span>: {currentMaterial}</p>
+                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '115px', display: 'inline-block' }}>SATUAN PENDIDIKAN</span>: {formInput.schoolName}</p>
+                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '115px', display: 'inline-block' }}>MATA PELAJARAN</span>: {formInput.subject}</p>
+                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '115px', display: 'inline-block' }}>KELAS / SEMESTER</span>: {formInput.grade} / {formInput.semester}</p>
+                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '115px', display: 'inline-block' }}>MATERI POKOK</span>: {currentMaterial}</p>
               </td>
               <td>
-                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '120px', display: 'inline-block' }}>NAMA GURU</span>: {formInput.teacherName}</p>
-                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '120px', display: 'inline-block' }}>NIP GURU</span>: {formInput.teacherNip}</p>
-                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '120px', display: 'inline-block' }}>JABATAN</span>: {formInput.position}</p>
-                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '120px', display: 'inline-block' }}>ALOKASI WAKTU</span>: {formInput.timeAllocation || data?.header?.timeLimit || '60 Menit'}</p>
+                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '95px', display: 'inline-block' }}>NAMA GURU</span>: {formInput.teacherName}</p>
+                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '95px', display: 'inline-block' }}>NIP GURU</span>: {formInput.teacherNip}</p>
+                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '95px', display: 'inline-block' }}>JABATAN</span>: {formInput.position}</p>
+                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '95px', display: 'inline-block' }}>ALOKASI WAKTU</span>: {formInput.timeAllocation || data?.header?.timeLimit || '60 Menit'}</p>
               </td>
             </tr>
           </tbody>
