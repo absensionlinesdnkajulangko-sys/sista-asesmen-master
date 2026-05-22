@@ -4,7 +4,7 @@ import { NavItem } from './Sidebar';
 import { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
-import { generateKunciOnly, generateKisiOnly } from '../lib/gemini'; // Import fungsi baru
+import { generateKunciOnly, generateKisiOnly } from '../lib/gemini';
 
 interface ModulTableProps {
   data: GeneratedSoal;
@@ -20,7 +20,6 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
   const [generatedImages, setGeneratedImages] = useState<Record<number, string>>({});
   const [isGeneratingImage, setIsGeneratingImage] = useState<Record<number, boolean>>({});
   
-  // State manajemen data internal untuk mendukung penambahan Kunci & Kisi secara dinamis
   const [localQuestions, setLocalQuestions] = useState(data?.questions || []);
   const [localKisiKisi, setLocalKisiKisi] = useState(data?.kisiKisi || []);
   const [isTabLoading, setIsTabLoading] = useState(false);
@@ -29,7 +28,6 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
     window.print();
   };
 
-  // Fungsi interseptor pemindahan Tab sekaligus pemicu On-Demand AI Generator
   const handleTabChange = async (tab: 'soal' | 'kunci' | 'kisi') => {
     setActiveTab(tab);
 
@@ -206,8 +204,32 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-32">
-      {/* PERBAIKAN CSS PRINT: Memperkecil font tabel identitas utama menjadi 9pt khusus saat diprint agar muat 1 baris lurus */}
-      <style dangerouslySetInnerHTML={{ __html: `@media print { .no-print, button, header, nav, aside, footer, .sticky { display: none !important; } body, main, #root { background: white !important; padding: 0 !important; margin: 0 !important; width: 100% !important; } .print-container { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; } table, .spreadsheet-table { width: 100% !important; border-collapse: collapse !important; } .spreadsheet-table th, .spreadsheet-table td { border: 1px solid #000000 !important; padding: 6px !important; font-size: 10pt !important; } .no-wrap-print { white-space: nowrap !important; } .print-only-header { display: block !important; } .screen-only-header { display: none !important; } .print-forced-row { display: block !important; } .print-identity-table { display: table !important; width: 100% !important; border: 1px solid #000 !important; border-collapse: collapse !important; font-size: 9pt !important; } .print-identity-table td { border: 1px solid #000 !important; padding: 5px !important; width: 50% !important; vertical-align: top !important; line-height: 1.3 !important; } .screen-identity-grid { display: none !important; } } .print-only-header, .print-identity-table { display: none; }`}} />
+      {/* PERBAIKAN CSS PRINT:
+        - Menggunakan border hanya pada kotak utama
+        - Tabel di dalam tabel (.inner-table) TIDAK diberikan border agar bersih
+      */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print { 
+          .no-print, button, header, nav, aside, footer, .sticky { display: none !important; } 
+          body, main, #root { background: white !important; padding: 0 !important; margin: 0 !important; width: 100% !important; } 
+          .print-container { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; } 
+          table, .spreadsheet-table { width: 100% !important; border-collapse: collapse !important; } 
+          .spreadsheet-table th, .spreadsheet-table td { border: 1px solid #000000 !important; padding: 6px !important; font-size: 10pt !important; } 
+          .print-only-header { display: block !important; } 
+          .screen-only-header { display: none !important; } 
+          
+          /* KOTAK IDENTITAS LUAR */
+          .print-identity-table { display: table !important; width: 100% !important; border: 1px solid #000 !important; border-collapse: collapse !important; font-size: 10pt !important; } 
+          .print-identity-table > tbody > tr > td { border: 1px solid #000 !important; padding: 6px !important; width: 50% !important; vertical-align: top !important; } 
+          
+          /* TABEL DI DALAM TABEL (Merapikan Titik Dua) */
+          .inner-table { width: 100% !important; border: none !important; margin: 0 !important; }
+          .inner-table tr td { border: none !important; padding: 2px 4px 2px 0 !important; vertical-align: top !important; }
+          
+          .screen-identity-grid { display: none !important; } 
+        } 
+        .print-only-header, .print-identity-table { display: none; }
+      `}} />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 no-print bg-white/80 backdrop-blur-md p-4 rounded-[1.5rem] border border-citrus-100 sticky top-4 z-40 shadow-xl shadow-citrus-900/5">
         <button onClick={onBack} className="flex items-center gap-2 text-citrus-700 font-bold hover:text-citrus-900 transition-colors px-4 py-2">
@@ -254,37 +276,49 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
           <p className="text-sm font-medium mt-1">TAHUN AJARAN {formInput.academicYear}</p>
         </div>
 
-        {/* 1. Tampilan Grid khusus untuk Layar Monitor */}
+        {/* 1. Tampilan Monitor: Menggunakan Tabel Dalam Tabel agar LURUS SEMPURNA */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-1 mb-8 text-[10px] md:text-xs border border-black p-4 screen-identity-grid">
-          <div className="space-y-1">
-            <p><span className="font-bold w-32 inline-block uppercase">Satuan Pendidikan</span>: {formInput.schoolName}</p>
-            <p><span className="font-bold w-32 inline-block uppercase">Mata Pelajaran</span>: {formInput.subject}</p>
-            <p><span className="font-bold w-32 inline-block uppercase">Kelas / Semester</span>: {formInput.grade} / {formInput.semester}</p>
-            <p><span className="font-bold w-32 inline-block uppercase">Materi Pokok</span>: {currentMaterial}</p>
-          </div>
-          <div className="space-y-1">
-            <p><span className="font-bold w-32 inline-block uppercase">Nama Guru</span>: {formInput.teacherName}</p>
-            <p><span className="font-bold w-32 inline-block uppercase">NIP Guru</span>: {formInput.teacherNip}</p>
-            <p><span className="font-bold w-32 inline-block uppercase">Jabatan</span>: {formInput.position}</p>
-            <p><span className="font-bold w-32 inline-block uppercase">Alokasi Waktu</span>: {formInput.timeAllocation || data?.header?.timeLimit || '60 Menit'}</p>
-          </div>
+          <table className="w-full text-left border-none">
+            <tbody>
+              <tr><td className="font-bold uppercase whitespace-nowrap w-[140px] py-0.5">Satuan Pendidikan</td><td className="w-3 font-bold py-0.5">:</td><td className="py-0.5">{formInput.schoolName}</td></tr>
+              <tr><td className="font-bold uppercase whitespace-nowrap w-[140px] py-0.5">Mata Pelajaran</td><td className="w-3 font-bold py-0.5">:</td><td className="py-0.5">{formInput.subject}</td></tr>
+              <tr><td className="font-bold uppercase whitespace-nowrap w-[140px] py-0.5">Kelas / Semester</td><td className="w-3 font-bold py-0.5">:</td><td className="py-0.5">{formInput.grade} / {formInput.semester}</td></tr>
+              <tr><td className="font-bold uppercase whitespace-nowrap w-[140px] py-0.5">Materi Pokok</td><td className="w-3 font-bold py-0.5">:</td><td className="py-0.5">{currentMaterial}</td></tr>
+            </tbody>
+          </table>
+          <table className="w-full text-left border-none">
+            <tbody>
+              <tr><td className="font-bold uppercase whitespace-nowrap w-[100px] py-0.5">Nama Guru</td><td className="w-3 font-bold py-0.5">:</td><td className="py-0.5">{formInput.teacherName}</td></tr>
+              <tr><td className="font-bold uppercase whitespace-nowrap w-[100px] py-0.5">NIP Guru</td><td className="w-3 font-bold py-0.5">:</td><td className="py-0.5">{formInput.teacherNip}</td></tr>
+              <tr><td className="font-bold uppercase whitespace-nowrap w-[100px] py-0.5">Jabatan</td><td className="w-3 font-bold py-0.5">:</td><td className="py-0.5">{formInput.position}</td></tr>
+              <tr><td className="font-bold uppercase whitespace-nowrap w-[100px] py-0.5">Alokasi Waktu</td><td className="w-3 font-bold py-0.5">:</td><td className="py-0.5">{formInput.timeAllocation || data?.header?.timeLimit || '60 Menit'}</td></tr>
+            </tbody>
+          </table>
         </div>
 
-        {/* 2. Tampilan Tabel khusus untuk Kertas Cetak Fisik dengan label yang ringkas */}
+        {/* 2. Tampilan Cetak Fisik: Menggunakan Tabel Dalam Tabel agar LURUS SEMPURNA */}
         <table className="print-identity-table mb-8">
           <tbody>
             <tr>
               <td>
-                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '115px', display: 'inline-block' }}>SATUAN PENDIDIKAN</span>: {formInput.schoolName}</p>
-                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '115px', display: 'inline-block' }}>MATA PELAJARAN</span>: {formInput.subject}</p>
-                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '115px', display: 'inline-block' }}>KELAS / SEMESTER</span>: {formInput.grade} / {formInput.semester}</p>
-                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '115px', display: 'inline-block' }}>MATERI POKOK</span>: {currentMaterial}</p>
+                <table className="inner-table text-[10px]">
+                  <tbody>
+                    <tr><td className="font-bold whitespace-nowrap w-[140px]">SATUAN PENDIDIKAN</td><td className="font-bold w-3">:</td><td>{formInput.schoolName}</td></tr>
+                    <tr><td className="font-bold whitespace-nowrap w-[140px]">MATA PELAJARAN</td><td className="font-bold w-3">:</td><td>{formInput.subject}</td></tr>
+                    <tr><td className="font-bold whitespace-nowrap w-[140px]">KELAS / SEMESTER</td><td className="font-bold w-3">:</td><td>{formInput.grade} / {formInput.semester}</td></tr>
+                    <tr><td className="font-bold whitespace-nowrap w-[140px]">MATERI POKOK</td><td className="font-bold w-3">:</td><td>{currentMaterial}</td></tr>
+                  </tbody>
+                </table>
               </td>
               <td>
-                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '95px', display: 'inline-block' }}>NAMA GURU</span>: {formInput.teacherName}</p>
-                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '95px', display: 'inline-block' }}>NIP GURU</span>: {formInput.teacherNip}</p>
-                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '95px', display: 'inline-block' }}>JABATAN</span>: {formInput.position}</p>
-                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '95px', display: 'inline-block' }}>ALOKASI WAKTU</span>: {formInput.timeAllocation || data?.header?.timeLimit || '60 Menit'}</p>
+                <table className="inner-table text-[10px]">
+                  <tbody>
+                    <tr><td className="font-bold whitespace-nowrap w-[100px]">NAMA GURU</td><td className="font-bold w-3">:</td><td>{formInput.teacherName}</td></tr>
+                    <tr><td className="font-bold whitespace-nowrap w-[100px]">NIP GURU</td><td className="font-bold w-3">:</td><td>{formInput.teacherNip}</td></tr>
+                    <tr><td className="font-bold whitespace-nowrap w-[100px]">JABATAN</td><td className="font-bold w-3">:</td><td>{formInput.position}</td></tr>
+                    <tr><td className="font-bold whitespace-nowrap w-[100px]">ALOKASI WAKTU</td><td className="font-bold w-3">:</td><td>{formInput.timeAllocation || data?.header?.timeLimit || '60 Menit'}</td></tr>
+                  </tbody>
+                </table>
               </td>
             </tr>
           </tbody>
@@ -308,7 +342,6 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
                       <div className={cn("relative group", isAbove ? "w-full max-w-2xl mx-auto" : "max-w-sm")}>
                         <img src={generatedImages[q.number]} className="w-full h-auto rounded-xl border" referrerPolicy="no-referrer" />
                         
-                        {/* Kontrol Manajemen Overlay Gambar */}
                         <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity no-print bg-slate-900/60 backdrop-blur-sm p-1.5 rounded-xl">
                           <button 
                             onClick={() => generateImage(q.number, q)} 
@@ -437,7 +470,7 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
                       <td className="text-xs leading-relaxed"><b>CP:</b> <p className="mb-2 italic text-slate-700">{formInput.cp}</p><b>TP:</b> <p className="text-slate-800">{item.tp}</p></td>
                       <td className="text-xs italic text-slate-700">{item.indikatorSoal}</td>
                       <td className="text-center"><span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border">{item.levelKognitif}</span></td>
-                      <td className="text-center w-32 whitespace-nowrap no-wrap-print">
+                      <td className="text-center w-32 whitespace-nowrap">
                         <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 border inline-block whitespace-nowrap">
                           {item.bentukSoal}
                         </span>
