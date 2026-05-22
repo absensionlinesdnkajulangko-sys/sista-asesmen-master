@@ -94,7 +94,7 @@ export default function Sidebar({ active, onChange, onLogout }: SidebarProps) {
         </button>
         
         <div className="mt-6 text-center">
-          <p className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter italic">V.2.0 • Developed by FIDHAL TOUNA AI</p>
+          <p className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter italic">Versi 2.0</p>
         </div>
       </div>
     </aside>
