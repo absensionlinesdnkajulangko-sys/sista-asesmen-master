@@ -34,7 +34,6 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
     setActiveTab(tab);
 
     if (tab === 'kunci') {
-      // Cek apakah kunci jawaban masih kosong (ditandai dengan answerKey berupa string kosong atau strip)
       const belumAdaKunci = localQuestions.every(q => q.answerKey === "" || q.answerKey === "-");
       if (belumAdaKunci) {
         setIsTabLoading(true);
@@ -50,7 +49,6 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
     }
 
     if (tab === 'kisi') {
-      // Cek apakah data kisi-kisi masih kosong kosong
       if (localKisiKisi.length === 0) {
         setIsTabLoading(true);
         try {
@@ -65,14 +63,11 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
     }
   };
 
-  // PERBAIKAN: Optimalisasi pembersihan prompt visual agar fokus pada objek soal
   const generateImage = async (questionNumber: number, questionObject: any) => {
     setIsGeneratingImage(prev => ({ ...prev, [questionNumber]: true }));
     try {
-      // 1. Ambil prompt dasar dari AI
       let basePrompt = questionObject.imagePrompt || questionObject.stimulus || questionObject.text;
       
-      // 2. Bersihkan kalimat pengantar khas soal Indonesia agar AI tidak bingung memunculkan objek manusia/murid
       basePrompt = basePrompt
         .replace(/Murid melihat/gi, '')
         .replace(/Bapak\/Ibu Guru menunjukkan/gi, '')
@@ -80,7 +75,6 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
         .replace(/di bawah ini/gi, '')
         .replace(/dengan teliti/gi, '');
 
-      // 3. Gabungkan dengan penegasan style komik/buku cetak anak yang bersih tanpa teks acak
       const fullPrompt = `${basePrompt.trim()}, clip art style for elementary school textbook, vibrant colors, clear object, isolated on a solid white background, no text, no characters, 2d vector`;
       const encodedPrompt = encodeURIComponent(fullPrompt);
       
@@ -99,7 +93,6 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
     }
   };
   
-  // Fungsi untuk menghapus gambar dari state internal
   const handleRemoveImage = (questionNumber: number) => {
     setGeneratedImages(prev => {
       const updated = { ...prev };
@@ -145,8 +138,8 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
     const postHtml = "</body></html>";
     
     let contentHtml = '<div style="width: 100%;">';
-    contentHtml += `<div class="centered"><h2 class="uppercase font-bold" style="margin-bottom: 5pt;">${getHeaderText()}</h2><p class="font-bold" style="margin-top: 0;">TAHUN AJARAN ${formInput.academicYear}</p></div><div style="border-bottom: 2pt double black; height: 1pt; margin-bottom: 15pt; width: 100%;"></div>`;
-    contentHtml += `<table class="identity-table"><tr><td width="50%"><b>SATUAN PENDIDIKAN</b>: ${formInput.schoolName}<br><b>MATA PELAJARAN</b>: ${formInput.subject}<br><b>KELAS / SEMESTER</b>: ${formInput.grade} / ${formInput.semester}<br>${(activeTab !== 'soal' || (mode !== 'sts' && mode !== 'sas')) ? `<b>MATERI POKOK</b>: ${currentMaterial}` : ''}</td><td><b>NAMA GURU</b>: ${formInput.teacherName}<br><b>NIP GURU</b>: ${formInput.teacherNip}<br><b>JABATAN</b>: ${formInput.position}<br><b>ALOKASI WAKTU</b>: ${formInput.timeAllocation || data?.header?.timeLimit || '60 Menit'}</td></tr></table>`;
+    contentHtml += `<div class="centered"><h2 class="uppercase font-bold" style="margin-bottom: 5pt;">LEMBAR ASESMEN KURIKULUM MERDEKA</h2><p class="font-bold" style="margin-top: 0;">TAHUN AJARAN ${formInput.academicYear}</p></div><div style="border-bottom: 2pt double black; height: 1pt; margin-bottom: 15pt; width: 100%;"></div>`;
+    contentHtml += `<table class="identity-table"><tr><td width="50%"><b>SATUAN PENDIDIKAN</b>: ${formInput.schoolName}<br><b>MATA PELAJARAN</b>: ${formInput.subject}<br><b>KELAS / SEMESTER</b>: ${formInput.grade} / ${formInput.semester}<br><b>MATERI POKOK</b>: ${currentMaterial}</td><td><b>NAMA GURU</b>: ${formInput.teacherName}<br><b>NIP GURU</b>: ${formInput.teacherNip}<br><b>JABATAN</b>: ${formInput.position}<br><b>ALOKASI WAKTU</b>: ${formInput.timeAllocation || data?.header?.timeLimit || '60 Menit'}</td></tr></table>`;
 
     if (activeTab === 'soal') {
       contentHtml += `<p style="font-style: italic; border-bottom: 1px solid #ccc; padding-bottom: 5pt; margin-bottom: 15pt;">Petunjuk: Kerjakanlah soal-soal di bawah ini dengan jujur dan teliti!</p>`;
@@ -213,7 +206,8 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-32">
-      <style dangerouslySetInnerHTML={{ __html: `@media print { .no-print, button, header, nav, aside, footer, .sticky { display: none !important; } body, main, #root { background: white !important; padding: 0 !important; margin: 0 !important; width: 100% !important; } .print-container { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; } table, .spreadsheet-table { width: 100% !important; border-collapse: collapse !important; } .spreadsheet-table th, .spreadsheet-table td { border: 1px solid #000000 !important; padding: 6px !important; font-size: 10pt !important; } .no-wrap-print { white-space: nowrap !important; } }`}} />
+      {/* PERBAIKAN CSS PRINT: Menambahkan styling penentu agar tabel identitas cetak tetap simetris kiri-kanan */}
+      <style dangerouslySetInnerHTML={{ __html: `@media print { .no-print, button, header, nav, aside, footer, .sticky { display: none !important; } body, main, #root { background: white !important; padding: 0 !important; margin: 0 !important; width: 100% !important; } .print-container { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; } table, .spreadsheet-table { width: 100% !important; border-collapse: collapse !important; } .spreadsheet-table th, .spreadsheet-table td { border: 1px solid #000000 !important; padding: 6px !important; font-size: 10pt !important; } .no-wrap-print { white-space: nowrap !important; } .print-only-header { display: block !important; } .screen-only-header { display: none !important; } .print-forced-row { display: block !important; } .print-identity-table { display: table !important; width: 100% !important; border: 1px solid #000 !important; border-collapse: collapse !important; } .print-identity-table td { border: 1px solid #000 !important; padding: 6px !important; width: 50% !important; vertical-align: top !important; } .screen-identity-grid { display: none !important; } } .print-only-header, .print-identity-table { display: none; }`}} />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 no-print bg-white/80 backdrop-blur-md p-4 rounded-[1.5rem] border border-citrus-100 sticky top-4 z-40 shadow-xl shadow-citrus-900/5">
         <button onClick={onBack} className="flex items-center gap-2 text-citrus-700 font-bold hover:text-citrus-900 transition-colors px-4 py-2">
@@ -255,18 +249,19 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
         )}
 
         <div className="text-center border-b-4 border-double border-black pb-4 mb-4">
-          <h1 className="text-2xl font-bold uppercase tracking-wide">{getHeaderText()}</h1>
+          <h1 className="text-2xl font-bold uppercase tracking-wide screen-only-header">{getHeaderText()}</h1>
+          <h1 className="text-2xl font-bold uppercase tracking-wide print-only-header">LEMBAR ASESMEN KURIKULUM MERDEKA</h1>
           <p className="text-sm font-medium mt-1">TAHUN AJARAN {formInput.academicYear}</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-1 mb-8 text-[10px] md:text-xs border border-black p-4">
+        {/* PERBAIKAN STRUKTUR: Memisahkan tampilan Grid (Monitor) dan tampilan Table (Kertas Print) agar posisi kolom terkunci sempurna */}
+        {/* 1. Tampilan Grid khusus untuk Layar Monitor */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-1 mb-8 text-[10px] md:text-xs border border-black p-4 screen-identity-grid">
           <div className="space-y-1">
             <p><span className="font-bold w-32 inline-block uppercase">Satuan Pendidikan</span>: {formInput.schoolName}</p>
             <p><span className="font-bold w-32 inline-block uppercase">Mata Pelajaran</span>: {formInput.subject}</p>
             <p><span className="font-bold w-32 inline-block uppercase">Kelas / Semester</span>: {formInput.grade} / {formInput.semester}</p>
-            {(activeTab !== 'soal' || (mode !== 'sts' && mode !== 'sas')) && (
-              <p><span className="font-bold w-32 inline-block uppercase">Materi Pokok</span>: {currentMaterial}</p>
-            )}
+            <p><span className="font-bold w-32 inline-block uppercase">Materi Pokok</span>: {currentMaterial}</p>
           </div>
           <div className="space-y-1">
             <p><span className="font-bold w-32 inline-block uppercase">Nama Guru</span>: {formInput.teacherName}</p>
@@ -275,6 +270,26 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
             <p><span className="font-bold w-32 inline-block uppercase">Alokasi Waktu</span>: {formInput.timeAllocation || data?.header?.timeLimit || '60 Menit'}</p>
           </div>
         </div>
+
+        {/* 2. Tampilan Tabel khusus untuk Kertas Cetak Fisik (Akan muncul menggantikan grid saat di-print) */}
+        <table className="print-identity-table text-xs mb-8">
+          <tbody>
+            <tr>
+              <td>
+                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '120px', display: 'inline-block' }}>SATUAN PENDIDIKAN</span>: {formInput.schoolName}</p>
+                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '120px', display: 'inline-block' }}>MATA PELAJARAN</span>: {formInput.subject}</p>
+                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '120px', display: 'inline-block' }}>KELAS / SEMESTER</span>: {formInput.grade} / {formInput.semester}</p>
+                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '120px', display: 'inline-block' }}>MATERI POKOK</span>: {currentMaterial}</p>
+              </td>
+              <td>
+                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '120px', display: 'inline-block' }}>NAMA GURU</span>: {formInput.teacherName}</p>
+                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '120px', display: 'inline-block' }}>NIP GURU</span>: {formInput.teacherNip}</p>
+                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '120px', display: 'inline-block' }}>JABATAN</span>: {formInput.position}</p>
+                <p style={{ margin: '2px 0' }}><span style={{ fontWeight: 'bold', width: '120px', display: 'inline-block' }}>ALOKASI WAKTU</span>: {formInput.timeAllocation || data?.header?.timeLimit || '60 Menit'}</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
         {activeTab === 'soal' && (
           <div className="space-y-8">
@@ -315,7 +330,6 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
                       </div>
                     ) : (
                       <div className="no-print">
-                        {/* PERBAIKAN: Melemparkan objek utuh q agar fungsi generator bisa mengekstrak properti q.imagePrompt secara akurat */}
                         <button onClick={() => generateImage(q.number, q)} disabled={isGeneratingImage[q.number]} className="gradient-citrus text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2">
                           <DownloadCloud className="w-4 h-4" /> {isGeneratingImage[q.number] ? 'Memproses Gambar...' : 'Generate Stimulus Visual'}
                         </button>
