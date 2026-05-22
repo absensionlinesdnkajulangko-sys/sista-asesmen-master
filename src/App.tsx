@@ -12,7 +12,8 @@ import { SoalFormData, GeneratedSoal } from './types';
 // PERBAIKAN: Impor fungsi baru yang hanya meng-generate soal saja
 import { generateSoalOnly } from './lib/gemini'; 
 import { motion, AnimatePresence } from 'motion/react';
-import { Target, LayoutDashboard, Search, Bell, User as UserIcon, FileText } from 'lucide-react';
+// Penambahan import ikon baru untuk panduan aplikasi
+import { Target, LayoutDashboard, Search, Bell, User as UserIcon, FileText, MousePointerClick, ClipboardEdit, Settings2, Wand2, Image as ImageIcon, Printer } from 'lucide-react';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -101,48 +102,72 @@ export default function App() {
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Langkah 1 */}
               <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-10 h-10 rounded-xl bg-citrus-50 text-citrus-600 flex items-center justify-center font-bold mb-4">1</div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-citrus-50 text-citrus-600 flex items-center justify-center font-bold">1</div>
+                  <MousePointerClick className="w-6 h-6 text-citrus-300" />
+                </div>
                 <h4 className="font-bold text-slate-900 mb-2">Pilih Jenis Asesmen</h4>
                 <p className="text-sm text-slate-600 leading-relaxed">
                   Pilihlah salah satu menu di sidebar (Asesmen Diagnostik, Formatif, Sumatif, STS, atau SAS) sesuai kebutuhan evaluasi Anda.
                 </p>
               </div>
 
+              {/* Langkah 2 */}
               <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-10 h-10 rounded-xl bg-citrus-50 text-citrus-600 flex items-center justify-center font-bold mb-4">2</div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-citrus-50 text-citrus-600 flex items-center justify-center font-bold">2</div>
+                  <ClipboardEdit className="w-6 h-6 text-citrus-300" />
+                </div>
                 <h4 className="font-bold text-slate-900 mb-2">Isi Identitas & Kurikulum</h4>
                 <p className="text-sm text-slate-600 leading-relaxed">
                   Lengkapi data satuan pendidikan, guru, dan kepala sekolah. Masukkan Capaian Pembelajaran (CP) dan Materi Utama (Materi Pokok) yang ingin diukur.
                 </p>
               </div>
 
+              {/* Langkah 3 */}
               <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-10 h-10 rounded-xl bg-citrus-50 text-citrus-600 flex items-center justify-center font-bold mb-4">3</div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-citrus-50 text-citrus-600 flex items-center justify-center font-bold">3</div>
+                  <Settings2 className="w-6 h-6 text-citrus-300" />
+                </div>
                 <h4 className="font-bold text-slate-900 mb-2">Konfigurasi Soal</h4>
                 <p className="text-sm text-slate-600 leading-relaxed">
                   Tentukan jumlah soal, tingkat kognitif (LOTS/MOTS/HOTS), dan jenis soal (Pilihan Ganda, Pilihan Ganda Kompleks, Benar Salah, Menjodohkan, Isian, atau Uraian). Aktifkan stimulus gambar jika diperlukan.
                 </p>
               </div>
 
+              {/* Langkah 4 */}
               <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-10 h-10 rounded-xl bg-citrus-50 text-citrus-600 flex items-center justify-center font-bold mb-4">4</div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-citrus-50 text-citrus-600 flex items-center justify-center font-bold">4</div>
+                  <Wand2 className="w-6 h-6 text-citrus-300" />
+                </div>
                 <h4 className="font-bold text-slate-900 mb-2">Generate & Tinjau Soal</h4>
                 <p className="text-sm text-slate-600 leading-relaxed">
                   Klik tombol generate dan tunggu Fidhal Touna AI memproses. Anda dapat meninjau soal, memilih stimulus visual, dan mengecek kunci jawaban serta kisi-kisi.
                 </p>
               </div>
 
+              {/* Langkah 5 */}
               <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-10 h-10 rounded-xl bg-citrus-50 text-citrus-600 flex items-center justify-center font-bold mb-4">5</div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-citrus-50 text-citrus-600 flex items-center justify-center font-bold">5</div>
+                  <ImageIcon className="w-6 h-6 text-citrus-300" />
+                </div>
                 <h4 className="font-bold text-slate-900 mb-2">Kustomisasi Gambar</h4>
                 <p className="text-sm text-slate-600 leading-relaxed">
                   Jika stimulus gambar sudah diaktifkan, Anda dapat mengubah gambar yang dihasilkan AI agar lebih relevan dengan konteks soal melalui tombol "Ganti Gambar".
                 </p>
               </div>
 
+              {/* Langkah 6 */}
               <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-10 h-10 rounded-xl bg-citrus-50 text-citrus-600 flex items-center justify-center font-bold mb-4">6</div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-citrus-50 text-citrus-600 flex items-center justify-center font-bold">6</div>
+                  <Printer className="w-6 h-6 text-citrus-300" />
+                </div>
                 <h4 className="font-bold text-slate-900 mb-2">Unduh/Cetak</h4>
                 <p className="text-sm text-slate-600 leading-relaxed">
                   Gunakan tombol export untuk mengunduh instrumen penilaian ke format .doc secara terpisah (Lembar Soal, Kunci Jawaban, atau Kisi-kisi) atau Cetak Langsung file pdf.
