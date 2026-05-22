@@ -202,7 +202,7 @@ export default function App() {
 
             {/* Tombol Bantuan WhatsApp */}
             <a 
-              href="https://wa.me/6285796566825?text=Halo%20Admin%20SISTA%2C%20saya%20butuh%20bantuan%20terkait%20aplikasi."
+              href="https://wa.me/6285796566825?text=Halo%20Fidhal%20Touna%20AI%2C%20saya%20butuh%20bantuan%20terkait%20aplikasi%20SISTA."
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center gap-3 px-4 py-2 bg-white border border-emerald-100 rounded-2xl shadow-sm hover:bg-emerald-50 hover:border-emerald-300 transition-all group"
