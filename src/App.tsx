@@ -200,14 +200,13 @@ export default function App() {
               <Bell className="w-6 h-6" />
             </button>
 
-            {/* PERBAIKAN: Mengubah div profil menjadi Tombol Bantuan WhatsApp */}
+            {/* Tombol Bantuan WhatsApp */}
             <a 
               href="https://wa.me/6285796566825?text=Halo%20Admin%20SISTA%2C%20saya%20butuh%20bantuan%20terkait%20aplikasi."
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center gap-3 px-4 py-2 bg-white border border-emerald-100 rounded-2xl shadow-sm hover:bg-emerald-50 hover:border-emerald-300 transition-all group"
             >
-              {/* Avatar ikon ganti warna hijau khas WA atau mempertahankan tema citrus */}
               <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white font-bold group-hover:scale-105 transition-transform">
                 ?
               </div>
@@ -217,6 +216,7 @@ export default function App() {
               </div>
             </a>
           </div>
+        </div>
 
         <AnimatePresence mode="wait">
           <motion.div
