@@ -214,7 +214,7 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
             <input name="academicYear" value={formData.academicYear} onChange={handleChange} required className={inputClass} placeholder="Contoh: 2023/2024" />
           </div>
           <div className="md:col-span-2 space-y-2">
-            <label className={labelClass}><Target className="w-4 h-4"/> Nama Kabupaten/Kecamatan/Kelurahan/Desa Sekolah Anda</label>
+            <label className={labelClass}><Target className="w-4 h-4"/> Nama (Kabupaten/Kecamatan/Kelurahan/Desa) Sekolah Anda</label>
             <input name="regionName" value={formData.regionName} onChange={handleChange} required className={inputClass} placeholder="Contoh: Kec. Merdeka, Kab. Indonesia" />
           </div>
         </div>
