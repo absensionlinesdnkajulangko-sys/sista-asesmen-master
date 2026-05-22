@@ -32,12 +32,14 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
   // Cek apakah mode saat ini termasuk kategori Sumatif
   const isSumatifMode = mode === 'sh' || mode === 'sts' || mode === 'sas';
 
+  // State untuk mendeteksi apakah kuota API Gemini habis
+  const [isQuotaExceeded, setIsQuotaExceeded] = useState(false);
+
   const [formData, setFormData] = useState<SoalFormData>(() => {
     const savedData = localStorage.getItem(`sista_form_${mode}`);
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData);
-        // Migrasi aman jika data lama di localStorage masih berbentuk string tunggal
         if (typeof parsed.material === 'string') {
           parsed.material = parsed.material ? [parsed.material] : [''];
         }
@@ -62,7 +64,7 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
       timeAllocation: '', 
       material: [''], 
       cp: '',
-      withImages: false, // Diubah ke false sebagai fallback default bawaan sistem
+      withImages: false,
       questionConfigs: [{ type: 'Pilihan Ganda', count: 5, optionCount: 4, scorePerItem: 1 }],
       cognitiveLevel: ['MOTS']
     };
@@ -82,6 +84,9 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
   }, [formData, mode]);
 
   useEffect(() => {
+    // Reset state eror kuota setiap kali beralih jenis asesmen
+    setIsQuotaExceeded(false);
+
     const savedData = localStorage.getItem(`sista_form_${mode}`);
     if (savedData) {
       try {
@@ -159,10 +164,21 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isSchoolValid) return;
-    onSubmit(formData);
+    setIsQuotaExceeded(false);
+    
+    try {
+      await onSubmit(formData);
+    } catch (error: any) {
+      const errorText = error?.message || String(error);
+      if (errorText.includes("429") || errorText.toLowerCase().includes("quota") || errorText.toLowerCase().includes("limit")) {
+        setIsQuotaExceeded(true);
+        // Scroll otomatis ke atas agar guru langsung melihat peringatan merah tersebut
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
   };
 
   const sectionClass = "glass p-6 md:p-8 rounded-[1.5rem] space-y-6";
@@ -170,7 +186,26 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
   const inputClass = "w-full bg-white/50 border border-citrus-200 rounded-xl py-3 px-4 focus:ring-2 focus:ring-citrus-500 focus:border-transparent outline-none transition-all";
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-8 pb-20">
+    <form onSubmit={handleFormSubmit} className="max-w-4xl mx-auto space-y-8 pb-20">
+      
+      {/* PERBAIKAN: Kotak Notifikasi di Bagian Paling Atas Formulir */}
+      <AnimatePresence>
+        {isQuotaExceeded && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="flex items-center gap-3 p-5 bg-rose-50 border-2 border-rose-200 rounded-2xl text-rose-900 shadow-sm animate-pulse"
+          >
+            <AlertTriangle className="w-6 h-6 text-rose-600 shrink-0" />
+            <div>
+              <p className="font-black text-sm uppercase tracking-wide">KUOTA HARIAN ANDA TELAH HABIS</p>
+              <p className="text-xs font-medium text-rose-700/90 mt-0.5">Batas permintaan harian API gratis dari Google Cloud telah terpenuhi. Silakan hubungi admin Fidhal Touna AI atau ganti token API Anda.</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Identity Section */}
       <div className={sectionClass}>
         <div className="flex items-center gap-3 mb-2">
