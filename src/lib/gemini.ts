@@ -44,7 +44,7 @@ const CUSTOM_INSTRUCTION = `PENTING: Gunakan selalu kata 'murid' untuk merujuk p
 
 STRICT RULE - PEMILIHAN STIMULUS VISUAL OTOMATIS SECARA ACAK:
 Setiap kali Anda merancang pertanyaan, Anda WAJIB melakukan hal berikut secara acak:
-1. Lakukan pemilihan acak secara internal: Berikan peluang sekitar 20% hingga 30% bagi sebuah soal untuk memiliki stimulus visual (membutuhkan gambar), dan sisanya adalah soal berbasis teks murni.
+1. Lakukan pemilihan acak secara internal: Berikan peluang sekitar 30% hingga 40% bagi sebuah soal untuk memiliki stimulus visual (membutuhkan gambar), dan sisanya adalah soal berbasis teks murni.
 2. JIKA SOAL TERPILIH MEMILIKI GAMBAR: Tambahkan properti 'imagePrompt' di dalam objek soal. Isi dari 'imagePrompt' harus berupa deskripsi gambar pendukung yang sangat spesifik, akurat, dan relevan dengan esensi soal tersebut dalam BAHASA INGGRIS. Jangan memasukkan teks pertanyaan ke dalamnya, melainkan deskripsikan objek visualnya secara jelas (contoh: "A clear 3D mathematical diagram of a single cube with side measurements written on it").
 3. JIKA SOAL TIDAK MEMILIKI GAMBAR: JANGAN menambahkan properti 'imagePrompt' ke dalam objek soal tersebut (atau isi nilainya dengan null/string kosong).
 
