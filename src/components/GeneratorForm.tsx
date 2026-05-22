@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Minus, School, User as UserIcon, Briefcase, GraduationCap, Calendar, BookOpen, Layers, Target, ClipboardList, Trash2, AlertTriangle, Clock } from 'lucide-react';
 import { SoalFormData, QuestionType, QuestionConfig } from '../types';
 import { NavItem } from './Sidebar';
@@ -175,7 +175,6 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
       const errorText = error?.message || String(error);
       if (errorText.includes("429") || errorText.toLowerCase().includes("quota") || errorText.toLowerCase().includes("limit")) {
         setIsQuotaExceeded(true);
-        // Scroll otomatis ke atas agar guru langsung melihat peringatan merah tersebut
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }
@@ -188,14 +187,15 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
   return (
     <form onSubmit={handleFormSubmit} className="max-w-4xl mx-auto space-y-8 pb-20">
       
-      {/* PERBAIKAN: Kotak Notifikasi di Bagian Paling Atas Formulir */}
+      {/* Kotak Notifikasi di Bagian Paling Atas Formulir dengan Transisi yang Aman */}
       <AnimatePresence>
         {isQuotaExceeded && (
           <motion.div 
+            key="quota-alert"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="flex items-center gap-3 p-5 bg-rose-50 border-2 border-rose-200 rounded-2xl text-rose-900 shadow-sm animate-pulse"
+            className="flex items-center gap-3 p-5 bg-rose-50 border-2 border-rose-200 rounded-2xl text-rose-900 shadow-sm"
           >
             <AlertTriangle className="w-6 h-6 text-rose-600 shrink-0" />
             <div>
