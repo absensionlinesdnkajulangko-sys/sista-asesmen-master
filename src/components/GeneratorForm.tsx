@@ -62,7 +62,7 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
       timeAllocation: '', 
       material: [''], 
       cp: '',
-      withImages: true,
+      withImages: false, // Diubah ke false sebagai fallback default bawaan sistem
       questionConfigs: [{ type: 'Pilihan Ganda', count: 5, optionCount: 4, scorePerItem: 1 }],
       cognitiveLevel: ['MOTS']
     };
@@ -367,8 +367,6 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
                       </select>
                     </div>
                   )}
-                  
-                  {/* PERBAIKAN: Input Skor/Soal telah dihapus dari sini */}
 
                   {formData.questionConfigs.length > 1 && (
                     <div className="pt-5">
@@ -401,21 +399,6 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
                 {item}
               </button>
             ))}
-          </div>
-          <div className="pt-4">
-            <label className="flex items-center gap-3 cursor-pointer group">
-              <div className="relative">
-                <input 
-                  type="checkbox" 
-                  className="sr-only peer"
-                  checked={formData.withImages}
-                  onChange={(e) => setFormData({ ...formData, withImages: e.target.checked })}
-                />
-                <div className="w-12 h-6 bg-slate-200 peer-checked:bg-citrus-600 rounded-full transition-colors" />
-                <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-6 shadow-sm" />
-              </div>
-              <span className="text-sm font-bold text-slate-700 group-hover:text-citrus-600 transition-colors">Generate Stimulus Gambar Otomatis (AI Image)</span>
-            </label>
           </div>
           {formData.cognitiveLevel.length === 0 && (
             <p className="text-xs text-red-500 italic">Pilih minimal satu level kognitif.</p>
