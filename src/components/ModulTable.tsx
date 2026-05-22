@@ -204,10 +204,6 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-32">
-      {/* PERBAIKAN CSS PRINT:
-        - Menggunakan border hanya pada kotak utama
-        - Tabel di dalam tabel (.inner-table) TIDAK diberikan border agar bersih
-      */}
       <style dangerouslySetInnerHTML={{ __html: `
         @media print { 
           .no-print, button, header, nav, aside, footer, .sticky { display: none !important; } 
@@ -276,7 +272,6 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
           <p className="text-sm font-medium mt-1">TAHUN AJARAN {formInput.academicYear}</p>
         </div>
 
-        {/* 1. Tampilan Monitor: Menggunakan Tabel Dalam Tabel agar LURUS SEMPURNA */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-1 mb-8 text-[10px] md:text-xs border border-black p-4 screen-identity-grid">
           <table className="w-full text-left border-none">
             <tbody>
@@ -296,204 +291,10 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
           </table>
         </div>
 
-        {/* 2. Tampilan Cetak Fisik: Menggunakan Tabel Dalam Tabel agar LURUS SEMPURNA */}
         <table className="print-identity-table mb-8">
           <tbody>
             <tr>
               <td>
                 <table className="inner-table text-[10px]">
                   <tbody>
-                    <tr><td className="font-bold whitespace-nowrap w-[140px]">SATUAN PENDIDIKAN</td><td className="font-bold w-3">:</td><td>{formInput.schoolName}</td></tr>
-                    <tr><td className="font-bold whitespace-nowrap w-[140px]">MATA PELAJARAN</td><td className="font-bold w-3">:</td><td>{formInput.subject}</td></tr>
-                    <tr><td className="font-bold whitespace-nowrap w-[140px]">KELAS / SEMESTER</td><td className="font-bold w-3">:</td><td>{formInput.grade} / {formInput.semester}</td></tr>
-                    <tr><td className="font-bold whitespace-nowrap w-[140px]">MATERI POKOK</td><td className="font-bold w-3">:</td><td>{currentMaterial}</td></tr>
-                  </tbody>
-                </table>
-              </td>
-              <td>
-                <table className="inner-table text-[10px]">
-                  <tbody>
-                    <tr><td className="font-bold whitespace-nowrap w-[100px]">NAMA GURU</td><td className="font-bold w-3">:</td><td>{formInput.teacherName}</td></tr>
-                    <tr><td className="font-bold whitespace-nowrap w-[100px]">NIP GURU</td><td className="font-bold w-3">:</td><td>{formInput.teacherNip}</td></tr>
-                    <tr><td className="font-bold whitespace-nowrap w-[100px]">JABATAN</td><td className="font-bold w-3">:</td><td>{formInput.position}</td></tr>
-                    <tr><td className="font-bold whitespace-nowrap w-[100px]">ALOKASI WAKTU</td><td className="font-bold w-3">:</td><td>{formInput.timeAllocation || data?.header?.timeLimit || '60 Menit'}</td></tr>
-                  </tbody>
-                </table>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        {activeTab === 'soal' && (
-          <div className="space-y-8">
-            <p className="font-bold border-b border-gray-200 pb-2 italic">Petunjuk: Kerjakanlah soal-soal di bawah ini dengan jujur dan teliti!</p>
-            {localQuestions.map((q) => {
-              const isAbove = q.text?.toLowerCase()?.includes('di atas') || false;    
-              
-              return (
-                <div key={q.number} className="break-inside-avoid border-b border-slate-50 pb-6 space-y-4">
-                  {q.stimulus && (
-                    <div className="bg-slate-50 p-6 rounded-xl border-2 border-slate-200 mb-4 text-justify italic">
-                      <div className="whitespace-pre-wrap leading-relaxed">{q.stimulus}</div>
-                    </div>
-                  )}
-                  <div className="flex flex-col gap-4">
-                    {generatedImages[q.number] ? (
-                      <div className={cn("relative group", isAbove ? "w-full max-w-2xl mx-auto" : "max-w-sm")}>
-                        <img src={generatedImages[q.number]} className="w-full h-auto rounded-xl border" referrerPolicy="no-referrer" />
-                        
-                        <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity no-print bg-slate-900/60 backdrop-blur-sm p-1.5 rounded-xl">
-                          <button 
-                            onClick={() => generateImage(q.number, q)} 
-                            disabled={isGeneratingImage[q.number]}
-                            title="Ganti/Regenerate Gambar"
-                            className="p-1.5 bg-white text-citrus-600 hover:bg-citrus-50 rounded-lg transition-colors disabled:opacity-50"
-                          >
-                            <RefreshCw className={cn("w-4 h-4", isGeneratingImage[q.number] && "animate-spin")} />
-                          </button>
-                          <button 
-                            onClick={() => handleRemoveImage(q.number)}
-                            title="Hapus Gambar"
-                            className="p-1.5 bg-white text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="no-print">
-                        <button onClick={() => generateImage(q.number, q)} disabled={isGeneratingImage[q.number]} className="gradient-citrus text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2">
-                          <DownloadCloud className="w-4 h-4" /> {isGeneratingImage[q.number] ? 'Memproses Gambar...' : 'Generate Stimulus Visual'}
-                        </button>
-                      </div>
-                    )}
-                    <div className="flex items-start gap-4">
-                      <span className="font-bold min-w-[25px] h-8 w-8 rounded-full bg-slate-900 text-white flex items-center justify-center shrink-0">{q.number}.</span>
-                      <div className="flex-1"><div className="text-justify leading-relaxed whitespace-pre-wrap font-medium text-slate-900">{q.text}</div></div>
-                    </div>
-                  </div>
-
-                  <div className="ml-9 space-y-4">
-                    {q.type === 'Pilihan Ganda' && q.options && (
-                      <div className="grid grid-cols-1 gap-2 ml-2">
-                        {q.options.map((opt, i) => (
-                          <div key={i} className="flex gap-3 items-start">
-                            <span className="font-bold text-slate-700 w-5">{String.fromCharCode(65 + i)}.</span>
-                            <span className="text-slate-800">{opt}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {q.type === 'Benar Salah' && (
-                      <div className="flex gap-4 ml-2">
-                        <div className="flex items-center gap-2"><div className="w-5 h-5 border-2 rounded-full" /><span className="text-sm font-bold">BENAR</span></div>
-                        <div className="flex items-center gap-2"><div className="w-5 h-5 border-2 rounded-full" /><span className="text-sm font-bold">SALAH</span></div>
-                      </div>
-                    )}
-                    {q.type === 'Pilihan Ganda Kompleks' && q.multiOptions && (
-                      <div className="grid grid-cols-1 gap-3 ml-2">
-                        {q.multiOptions.map((opt, i) => (
-                          <div key={i} className="flex gap-3 items-center">
-                            <div className="w-5 h-5 border-2 rounded" /><span className="text-slate-800">{opt.text}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {q.type === 'Menjodohkan' && q.matchingPairs && (
-                      <div className="ml-2"><table className="w-full border-2 border-collapse"><thead><tr className="bg-slate-50"><th className="border-2 p-2 text-xs font-bold w-1/2">Pernyataan A</th><th className="border-2 p-2 text-xs font-bold w-1/2">Pernyataan B</th></tr></thead><tbody>{q.matchingPairs.map((pair, i) => <tr key={i}><td className="border-2 p-3 text-sm">{pair.prompt}</td><td className="border-2 p-3 text-sm"></td></tr>)}</tbody></table></div>
-                    )}
-                    {q.type === 'Isian Singkat' && <div className="ml-2 mt-4"><div className="w-full border-b-2 border-dotted h-8" /></div>}
-                    {q.type === 'Uraian' && <div className="ml-2 mt-4 space-y-2"><div className="w-full border-b-2 border-dotted h-8" /><div className="w-full border-b-2 border-dotted h-8" /></div>}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {activeTab === 'kunci' && (
-          <div className="space-y-8">
-            <h3 className="text-lg font-bold border-b-2 border-citrus-200 pb-2 text-citrus-800 uppercase tracking-tighter">Kunci Jawaban & Rubrik Penilaian</h3>
-            <table className="spreadsheet-table w-full">
-              <thead>
-                <tr>
-                  <th className="w-16 text-center">No</th>
-                  <th>Kunci Jawaban & Rubrik Penilaian</th>
-                </tr>
-              </thead>
-              <tbody>
-                {localQuestions.map((q) => (
-                  <tr key={q.number}>
-                    <td className="text-center font-bold font-mono vertical-align-top pt-4">{q.number}</td>
-                    <td>
-                      <div className="space-y-3 p-2">
-                        <div className="flex items-start gap-2">
-                          <span className="text-xs font-bold bg-citrus-500 text-white px-2 py-0.5 rounded shrink-0">KUNCI</span>
-                          <p className="font-bold text-citrus-900">{formatAnswerKey(q.answerKey)}</p>
-                        </div>
-                        
-                        <div className="bg-slate-50 p-4 rounded-lg border space-y-2">
-                          <p className="text-xs font-bold text-slate-700 uppercase tracking-wider border-b pb-1">Rubrik Penilaian:</p>
-                          <p className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">
-                            {(q as any).score || (q as any).rubrik || "Skor 1 jika murid menjawab dengan tepat. Skor 0 jika salah/kosong."}
-                          </p>
-                        </div>
-                        
-                        <p className="text-[10px] text-citrus-600 font-bold uppercase">Level Kognitif: {q.cognitiveLevel}</p>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {activeTab === 'kisi' && (
-          <div className="space-y-6">
-            <h3 className="text-lg font-bold border-b-2 border-citrus-200 pb-2 text-citrus-800 uppercase tracking-tighter">Matriks Kisi-kisi Asesmen</h3>
-            <div className="overflow-x-auto">
-              <table className="spreadsheet-table w-full">
-                <thead>
-                  <tr>
-                    <th className="text-center w-12">No</th>
-                    <th>Capaian & Tujuan Pembelajaran</th>
-                    <th>Indikator Soal</th>
-                    <th className="text-center w-20">Level</th>
-                    <th className="text-center w-32">Bentuk</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {localKisiKisi.map((item) => (
-                    <tr key={item.no}>
-                      <td className="text-center font-bold font-mono">{item.no}</td>
-                      <td className="text-xs leading-relaxed"><b>CP:</b> <p className="mb-2 italic text-slate-700">{formInput.cp}</p><b>TP:</b> <p className="text-slate-800">{item.tp}</p></td>
-                      <td className="text-xs italic text-slate-700">{item.indikatorSoal}</td>
-                      <td className="text-center"><span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border">{item.levelKognitif}</span></td>
-                      <td className="text-center w-32 whitespace-nowrap">
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 border inline-block whitespace-nowrap">
-                          {item.bentukSoal}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {activeTab !== 'soal' && (
-          <table className="signature-table mt-20 no-border w-full">
-            <tbody>
-              <tr>
-                <td className="text-left align-top"><p>Mengetahui,</p><p>Kepala Sekolah</p><div className="h-24"></div><p className="font-bold underline">{formInput.principalName}</p><p>NIP. {formInput.principalNip}</p></td>
-                <td className="text-left align-top"><p>{formInput.regionName}, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p><p>{formInput.position}</p><div className="h-24"></div><p className="font-bold underline">{formInput.teacherName}</p><p>NIP. {formInput.teacherNip}</p></td>
-              </tr>
-            </tbody>
-          </table>
-        )}
-      </div>
-    </div>
-  );
-}
+                    <tr><td className="font-bold whitespace-nowrap w-[140px]">SATUAN PENDID
