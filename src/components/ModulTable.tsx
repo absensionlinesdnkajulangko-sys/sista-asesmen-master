@@ -4,15 +4,28 @@
  */
 
 import { useState } from 'react';
-import GeneratorForm from './GeneratorForm';
+
+import GeneratorForm from './components/GeneratorForm';
 import ModulTable from './components/ModulTable';
 import Sidebar, { NavItem } from './components/Sidebar';
+import Login from './components/Login';
+
 import { SoalFormData, GeneratedSoal } from './types';
-// PERBAIKAN: Impor fungsi baru yang hanya meng-generate soal saja
-import { generateSoalOnly } from './lib/gemini'; 
+import { generateSoalOnly } from './lib/gemini';
+
 import { motion, AnimatePresence } from 'motion/react';
-// Penambahan import ikon baru untuk panduan aplikasi
-import { Target, LayoutDashboard, Search, Bell, User as UserIcon, FileText, MousePointerClick, ClipboardEdit, Settings2, Wand2, Image as ImageIcon, Printer } from 'lucide-react';
+
+import {
+  Search,
+  Bell,
+  FileText,
+  MousePointerClick,
+  ClipboardEdit,
+  Settings2,
+  Wand2,
+  Image as ImageIcon,
+  Printer
+} from 'lucide-react';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
