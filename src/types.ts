@@ -35,11 +35,13 @@ export interface QuestionItem {
   text: string;
   stimulus?: string; // Text stimulus (literacy/numeracy)
   imageUrl?: string; // URL for image stimulus
+  imagePrompt?: string; // <-- Tambahkan baris ini untuk mendukung fitur gambar AI
   options?: string[]; // For Multiple Choice / True-False
   multiOptions?: { text: string; isCorrect: boolean }[]; // For PGK
   matchingPairs?: { prompt: string; answer: string }[]; // For Matching
   answerKey: string;
-  explanation: string;
+  explanation: string; // Akan digunakan untuk "Pembahasan Materi"
+  score: string;       // <-- Tambahkan baris ini untuk menyimpan "Analisis Skor"
   cognitiveLevel: string;
 }
 
