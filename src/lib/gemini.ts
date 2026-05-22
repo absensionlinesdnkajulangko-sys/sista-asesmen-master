@@ -39,8 +39,12 @@ async function fetchSecureWithRetry(url: string, options: any, retries = 3, back
   }
 }
 
-// PERBAIKAN KRITIKAL: Memaksa Gemini membuat kriteria logika skor bergradasi (bukan angka 1 konstan) untuk Uraian
+// PERBAIKAN KRITIKAL: Memaksa Gemini membuat kriteria logika skor bergradasi, istilah 'murid', dan akurasi deskripsi gambar khusus (imagePrompt)
 const CUSTOM_INSTRUCTION = `PENTING: Gunakan selalu kata 'murid' untuk merujuk pada anak didik. Jangan pernah menggunakan istilah 'peserta didik' di dalam teks output yang Anda hasilkan.
+
+STRICT RULE - DESKRIPSI STIMULUS VISUAL KHUSUS:
+Setiap kali Anda merancang pertanyaan, Anda WAJIB menambahkan properti baru bernama 'imagePrompt' di dalam setiap objek soal. 
+Isi dari 'imagePrompt' harus berupa deskripsi gambar pendukung yang sangat spesifik, akurat, dan relevan dengan esensi soal tersebut dalam BAHASA INGGRIS. Jangan memasukkan teks pertanyaan ke dalamnya, melainkan deskripsikan objek visualnya secara jelas (contoh: jika soal matematika menghitung volume kubus, isi imagePrompt dengan "A clear 3D mathematical diagram of a single cube with side measurements written on it").
 
 STRICT RULE - PEMBAHASAN DAN LOGIKA SKOR/RUBRIK WAJIB TERPISAH:
 1. Kolom Pembahasan ('explanation'): Wajib diisi dengan analisis ilmiah, langkah penyelesaian matematis/logis, atau penjelasan teoritis mengapa kunci jawaban tersebut benar.
