@@ -104,7 +104,7 @@ export default function App() {
                 <div className="w-10 h-10 rounded-xl bg-citrus-50 text-citrus-600 flex items-center justify-center font-bold mb-4">2</div>
                 <h4 className="font-bold text-slate-900 mb-2">Isi Identitas & Kurikulum</h4>
                 <p className="text-sm text-slate-600 leading-relaxed">
-                  Lengkapi data satuan pendidikan, guru, and kepala sekolah. Masukkan Capaian Pembelajaran (CP) dan Tujuan Pembelajaran (TP) yang ingin diukur.
+                  Lengkapi data satuan pendidikan, guru, dan kepala sekolah. Masukkan Capaian Pembelajaran (CP) dan Materi Utama (Materi Pokok) yang ingin diukur.
                 </p>
               </div>
 
@@ -120,7 +120,7 @@ export default function App() {
                 <div className="w-10 h-10 rounded-xl bg-citrus-50 text-citrus-600 flex items-center justify-center font-bold mb-4">4</div>
                 <h4 className="font-bold text-slate-900 mb-2">Generate & Tinjau Soal</h4>
                 <p className="text-sm text-slate-600 leading-relaxed">
-                  Klik tombol generate dan tunggu AI memproses. Anda dapat meninjau soal, memilih stimulus visual, dan mengecek kunci jawaban serta kisi-kisi.
+                  Klik tombol generate dan tunggu Fidhal Touna AI memproses. Anda dapat meninjau soal, memilih stimulus visual, dan mengecek kunci jawaban serta kisi-kisi.
                 </p>
               </div>
 
@@ -134,9 +134,9 @@ export default function App() {
 
               <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
                 <div className="w-10 h-10 rounded-xl bg-citrus-50 text-citrus-600 flex items-center justify-center font-bold mb-4">6</div>
-                <h4 className="font-bold text-slate-900 mb-2">Unduh ke Microsoft Word</h4>
+                <h4 className="font-bold text-slate-900 mb-2">Unduh/Cetak</h4>
                 <p className="text-sm text-slate-600 leading-relaxed">
-                  Gunakan tombol export untuk mengunduh instrumen penilaian ke format .doc secara terpisah (Lembar Soal, Kunci Jawaban, atau Kisi-kisi).
+                  Gunakan tombol export untuk mengunduh instrumen penilaian ke format .doc secara terpisah (Lembar Soal, Kunci Jawaban, atau Kisi-kisi) atau Cetak Langsung file pdf.
                 </p>
               </div>
             </div>
@@ -149,11 +149,11 @@ export default function App() {
               <ul className="space-y-3 text-sm text-citrus-100">
                 <li className="flex gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-citrus-400 mt-1.5 shrink-0" />
-                  <span>Pastikan CP dan TP diisi dengan detail agar AI dapat menyesuaikan materi soal dengan target pembelajaran yang spesifik.</span>
+                  <span>Pastikan CP dan Materi Pokok diisi dengan detail agar Fidhal Touna AI dapat menyesuaikan materi soal dengan target pembelajaran yang spesifik.</span>
                 </li>
                 <li className="flex gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-citrus-400 mt-1.5 shrink-0" />
-                  <span>Pilih variasi level kognitif (HOTS/MOTS) untuk mengukur kemampuan berpikir kritis siswa secara komprehensif.</span>
+                  <span>Pilih variasi level kognitif (LOTS/MOTS/HOTS) untuk mengukur kemampuan berpikir kritis siswa secara komprehensif.</span>
                 </li>
                 <li className="flex gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-citrus-400 mt-1.5 shrink-0" />
