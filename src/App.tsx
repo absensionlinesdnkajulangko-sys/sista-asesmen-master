@@ -28,7 +28,7 @@ export default function App() {
     setFormData(null);
   };
 
-  // PERBAIKAN: Memanggil wrapper generateSoalOnly agar kunci dan kisi-kisi dimuat secara on-demand nanti
+  // PERBAIKAN: Mengganti teks dialog peringatan bawaan menjadi kalimat bersih pilihan Anda
   const handleSubmit = async (data: SoalFormData) => {
     setIsLoading(true);
     setFormData(data);
@@ -36,8 +36,17 @@ export default function App() {
       const result = await generateSoalOnly(data);
       setGeneratedSoal(result);
     } catch (error: any) {
-      alert(error.message || "Terjadi kesalahan saat generate soal. Silakan coba lagi.");
+      const errorMsg = error.message || String(error);
+      
+      // Jika pesan galat mengandung kode status 429 atau indikasi kuota terpenuhi
+      if (errorMsg.includes("429") || errorMsg.toLowerCase().includes("quota") || errorMsg.toLowerCase().includes("limit")) {
+        alert("kuota harian anda telah habis");
+      } else {
+        alert(errorMsg || "Terjadi kesalahan saat generate soal. Silakan coba lagi.");
+      }
+      
       console.error(error);
+      throw error; // Tetap dilempar ke bawah agar trigger visual box merah di bagian atas form dapat muncul
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +76,7 @@ export default function App() {
             <div className="relative z-10 space-y-4">
               <h2 className="text-3xl font-black text-slate-900 tracking-tight text-center md:text-left">Selamat Datang di <span className="text-citrus-600">SISTA DASHBOARD</span></h2>
               <p className="text-slate-600 max-w-2xl leading-relaxed text-center md:text-left">
-                Sistem Asesmen Pintar (SISTA) adalah platform Generator Asesmen tercanggih untuk Bapak/Ibu Guru. dikembangkan oleh FIDHAL TOUNA AI. Gunakan menu di sebelah kiri untuk mulai merancang bank soal berkualitas tinggi berbasis HOTS dan Literasi-Numerasi.
+                Sistem Asesmen Pintar (SISTA) adalah platform Generator Asesmen tercanggih untuk Bapak/Ibu Guru. dikembangkan oleh FIDHAL TOUNA AI. Use menu di sebelah kiri untuk mulai merancang bank soal berkualitas tinggi berbasis HOTS dan Literasi-Numerasi.
               </p>
               <div className="flex justify-center md:justify-start">
                 <button 
