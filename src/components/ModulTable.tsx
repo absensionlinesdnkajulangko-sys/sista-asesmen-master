@@ -4,7 +4,6 @@
  */
 
 import { useState } from 'react';
-import Login from './components/Login';
 import GeneratorForm from './components/GeneratorForm';
 import ModulTable from './components/ModulTable';
 import Sidebar, { NavItem } from './components/Sidebar';
