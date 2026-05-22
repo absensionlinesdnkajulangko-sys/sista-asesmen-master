@@ -1,4 +1,4 @@
-import { Download, ChevronLeft, FileText, DownloadCloud, ClipboardCheck, Key, Printer } from 'lucide-react';
+import { Download, ChevronLeft, FileText, DownloadCloud, ClipboardCheck, Key, Printer, RefreshCw, Trash2 } from 'lucide-react';
 import { GeneratedSoal, SoalFormData } from '../types';
 import { NavItem } from './Sidebar';
 import { useRef, useState } from 'react';
@@ -69,7 +69,7 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
     setIsGeneratingImage(prev => ({ ...prev, [questionNumber]: true }));
     try {
       const prompt = encodeURIComponent(stimulus + ", education style, flat illustration, clean vector, white background");
-      const imageUrl = `https://image.pollinations.ai/prompt/${prompt}?width=800&height=450&nologo=true&seed=${Math.floor(Math.random() * 1000)}`;
+      const imageUrl = `https://image.pollinations.ai/prompt/${prompt}?width=800&height=450&nologo=true&seed=${Math.floor(Math.random() * 10000)}`;
       
       const img = new Image();
       img.src = imageUrl;
@@ -82,6 +82,15 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
     } finally {
       setIsGeneratingImage(prev => ({ ...prev, [questionNumber]: false }));
     }
+  };
+
+  // PERBAIKAN: Fungsi untuk menghapus gambar dari state internal
+  const handleRemoveImage = (questionNumber: number) => {
+    setGeneratedImages(prev => {
+      const updated = { ...prev };
+      delete updated[questionNumber];
+      return updated;
+    });
   };
 
   const getHeaderText = () => {
@@ -153,7 +162,6 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
         contentHtml += `</div><br>`;
       }
     } else if (activeTab === 'kunci') {
-      // PERBAIKAN Word Lembar Kunci: Kolom skor kanan dihapus, Rubrik disatukan di bawah kunci
       contentHtml += `<table class="spreadsheet-table"><tr><th width="40">No</th><th>Kunci Jawaban & Rubrik Penilaian</th></tr>${localQuestions.map(q => `<tr><td class="centered">${q.number}</td><td><b>KUNCI JAWABAN: ${formatAnswerKey(q.answerKey)}</b><br><br><b>RUBRIK PENILAIAN:</b><br><i>${(q as any).score || (q as any).rubrik || 'Skor 1 jika benar, 0 jika salah.'}</i><br><br><small>Level Kognitif: ${q.cognitiveLevel || 'MOTS'}</small></td></tr>`).join('')}</table>`;
     } else if (activeTab === 'kisi') {
       contentHtml += `<table class="spreadsheet-table"><tr><th>No</th><th>Capaian & Tujuan Pembelajaran</th><th>Indikator</th><th>Level</th><th>Bentuk</th></tr>${localKisiKisi.map(k => `<tr><td class="centered">${k.no}</td><td><b>CP:</b> ${formInput.cp}<br><b>TP:</b> ${k.tp || '-'}</td><td>${k.indikatorSoal}</td><td class="centered">${k.levelKognitif}</td><td class="centered">${k.bentukSoal}</td></tr>`).join('')}</table>`;
@@ -272,6 +280,25 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
                     {generatedImages[q.number] ? (
                       <div className={cn("relative group", isAbove ? "w-full max-w-2xl mx-auto" : "max-w-sm")}>
                         <img src={generatedImages[q.number]} className="w-full h-auto rounded-xl border" referrerPolicy="no-referrer" />
+                        
+                        {/* PERBAIKAN: Kontrol Manajemen Overlay Gambar (Akan hilang otomatis saat dicetak) */}
+                        <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity no-print bg-slate-900/60 backdrop-blur-sm p-1.5 rounded-xl">
+                          <button 
+                            onClick={() => generateImage(q.number, stimulusForImage)} 
+                            disabled={isGeneratingImage[q.number]}
+                            title="Ganti/Regenerate Gambar"
+                            className="p-1.5 bg-white text-citrus-600 hover:bg-citrus-50 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            <RefreshCw className={cn("w-4 h-4", isGeneratingImage[q.number] && "animate-spin")} />
+                          </button>
+                          <button 
+                            onClick={() => handleRemoveImage(q.number)}
+                            title="Hapus Gambar"
+                            className="p-1.5 bg-white text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <div className="no-print">
@@ -328,7 +355,6 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
           <div className="space-y-8">
             <h3 className="text-lg font-bold border-b-2 border-citrus-200 pb-2 text-citrus-800 uppercase tracking-tighter">Kunci Jawaban & Rubrik Penilaian</h3>
             <table className="spreadsheet-table w-full">
-              {/* PERBAIKAN TOTAL: Header disesuaikan, kolom skor kanan dihapus penuh */}
               <thead>
                 <tr>
                   <th className="w-16 text-center">No</th>
