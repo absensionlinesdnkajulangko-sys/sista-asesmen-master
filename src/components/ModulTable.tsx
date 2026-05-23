@@ -356,20 +356,20 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
                           </div>
                         </div>
                       ) : (
-                        <div className="no-print flex gap-3">
-                          <button 
-                            onClick={() => handleChatGPTRedirect(q)} 
-                            className="gradient-citrus text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm hover:shadow-md transition-all"
-                          >
-                            <ExternalLink className="w-4 h-4" /> Buat Gambar di ChatGPT
-                          </button>
-                          <button 
-                            onClick={() => handlePasteImageUrl(q.number)} 
-                            className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all"
-                          >
-                            Tempel URL Gambar
-                          </button>
-                        </div>
+                        <div className="no-print flex gap-3 mt-2">
+  <button 
+    onClick={() => handleChatGPTRedirect(q)} 
+    className="gradient-citrus text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm hover:shadow-md transition-all"
+  >
+    <ExternalLink className="w-4 h-4" /> Buat Gambar di ChatGPT
+  </button>
+  <button 
+    onClick={() => handlePasteImageUrl(q.number)} 
+    className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all"
+  >
+    Tempel URL Gambar
+  </button>
+</div>
                       )
                     )}
 
