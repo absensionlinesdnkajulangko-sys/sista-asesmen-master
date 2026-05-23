@@ -419,7 +419,9 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
 
         {activeTab === 'kunci' && (
           <div className="space-y-8">
-            <h3 className="text-lg font-bold border-b-2 border-citrus-200 pb-2 text-citrus-800 uppercase tracking-tighter">Kunci Jawaban & Rubrik Penilaian</h3>
+            <h3 className="text-lg font-bold border-b-2 border-citrus-200 pb-2 text-citrus-800 uppercase tracking-tighter">
+              Kunci Jawaban & Rubrik Penilaian
+            </h3>
             <table className="spreadsheet-table w-full">
               <thead>
                 <tr>
@@ -428,33 +430,58 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
                 </tr>
               </thead>
               <tbody>
-                {localQuestions.map((q) => (
-                  <tr key={q.number}>
-                    <td className="text-center font-bold font-mono vertical-align-top pt-4">{q.number}</td>
-                    <td>
-                      <div className="space-y-3 p-2">
-                        <div className="flex items-start gap-2">
-                          <span className="text-xs font-bold bg-citrus-500 text-white px-2 py-0.5 rounded shrink-0">KUNCI</span>
-                          <p className="font-bold text-citrus-900">{formatAnswerKey(q.answerKey)}</p>
-                        </div>
-                        
-                        <div className="bg-slate-50 p-4 rounded-lg border space-y-2">
-                          <p className="text-xs font-bold text-slate-700 uppercase tracking-wider border-b pb-1">Rubrik Penilaian:</p>
-                          <p className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">
-                            {(q as any).score || (q as any).rubrik || "Skor 1 jika murid menjawab dengan tepat. Skor 0 jika salah/kosong."}
+                {localQuestions.map((q) => {
+                  // LOGIKA PEMISAHAN SKOR
+                  const rawScore = (q as any).score || "";
+                  const hasSplitter = rawScore.includes("ANALISIS SKOR:");
+                  
+                  // Jika format API mengandung instruksi split kita, kita pisah. 
+                  // Jika tidak, tampilkan apa adanya di kolom Rubrik.
+                  const pembahasan = hasSplitter ? rawScore.split("ANALISIS SKOR:")[0].replace("PEMBAHASAN MATERI:", "").trim() : null;
+                  const analisis = hasSplitter ? rawScore.split("ANALISIS SKOR:")[1].trim() : rawScore;
+
+                  return (
+                    <tr key={q.number}>
+                      <td className="text-center font-bold font-mono vertical-align-top pt-4">{q.number}</td>
+                      <td>
+                        <div className="space-y-4 p-4">
+                          {/* 1. Baris Kunci Jawaban */}
+                          <div className="flex items-start gap-2 border-b border-slate-100 pb-2">
+                            <span className="text-xs font-bold bg-citrus-600 text-white px-2 py-0.5 rounded shrink-0 uppercase">Kunci</span>
+                            <p className="font-bold text-citrus-900">{formatAnswerKey(q.answerKey)}</p>
+                          </div>
+                          
+                          {/* 2. Pembahasan Materi (Jika ada) */}
+                          {pembahasan && (
+                            <div className="space-y-1">
+                              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Pembahasan Materi:</p>
+                              <p className="text-sm text-slate-700 italic leading-relaxed whitespace-pre-wrap">{pembahasan}</p>
+                            </div>
+                          )}
+
+                          {/* 3. Analisis Skor / Rubrik Penilaian */}
+                          <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-2">
+                            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider border-b pb-1">
+                              {pembahasan ? "Analisis Skor & Rubrik:" : "Rubrik Penilaian:"}
+                            </p>
+                            <pre className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed font-sans">
+                              {analisis || "Skor 1 jika murid menjawab dengan tepat. Skor 0 jika salah/kosong."}
+                            </pre>
+                          </div>
+                          
+                          {/* 4. Level Kognitif */}
+                          <p className="text-[10px] text-citrus-600 font-bold uppercase mt-2">
+                            Level Kognitif: {q.cognitiveLevel || 'MOTS'}
                           </p>
                         </div>
-                        
-                        <p className="text-[10px] text-citrus-600 font-bold uppercase">Level Kognitif: {q.cognitiveLevel}</p>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
-
         {activeTab === 'kisi' && (
           <div className="space-y-6">
             <h3 className="text-lg font-bold border-b-2 border-citrus-200 pb-2 text-citrus-800 uppercase tracking-tighter">Matriks Kisi-kisi Asesmen</h3>
