@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Minus, School, User as UserIcon, Briefcase, GraduationCap, Calendar, BookOpen, Layers, Target, ClipboardList, Trash2, AlertTriangle, Clock, Image as ImageIcon } from 'lucide-react';
+import { Plus, Minus, School, User as UserIcon, Briefcase, GraduationCap, Calendar, BookOpen, Layers, Target, ClipboardList, Trash2, AlertTriangle, Clock } from 'lucide-react';
 import { SoalFormData, QuestionType, QuestionConfig } from '../types';
 import { NavItem } from './Sidebar';
 import { cn } from '../lib/utils';
@@ -65,7 +65,6 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
       material: [''], 
       cp: '',
       withImages: false,
-      imageCount: 1, // Tambahan default untuk jumlah gambar
       questionConfigs: [{ type: 'Pilihan Ganda', count: 5, optionCount: 4, scorePerItem: 1 }],
       cognitiveLevel: ['MOTS']
     };
@@ -417,58 +416,6 @@ export default function GeneratorForm({ onSubmit, isLoading, mode }: GeneratorFo
           ))}
         </div>
 
-        {/* TAMBAHAN: Konfigurasi Gambar Soal */}
-        <div className="space-y-4 border-t border-citrus-100 pt-6">
-          <div className="flex items-center justify-between">
-            <label className={labelClass}>
-              <ImageIcon className="w-4 h-4"/> Sertakan Gambar pada Soal
-            </label>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                name="withImages"
-                checked={formData.withImages}
-                onChange={handleChange}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-citrus-500"></div>
-            </label>
-          </div>
-
-          <AnimatePresence>
-            {formData.withImages && (
-              <motion.div
-                initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                animate={{ opacity: 1, height: 'auto', marginTop: '1rem' }}
-                exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                className="flex items-center gap-4 overflow-hidden"
-              >
-                <label className="text-[10px] font-bold text-citrus-600 uppercase flex-1">
-                  Jumlah Soal Bergambar
-                </label>
-                <div className="flex items-center gap-2 bg-white rounded-xl border border-citrus-200 p-1 w-32">
-                  <button
-                    type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, imageCount: Math.max(1, (prev.imageCount || 1) - 1) }))}
-                    className="p-1 px-2 hover:bg-citrus-50 rounded-lg transition-colors"
-                  >
-                    <Minus className="w-3 h-3 text-citrus-600"/>
-                  </button>
-                  <span className="font-bold w-full text-center text-sm">{formData.imageCount || 1}</span>
-                  <button
-                    type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, imageCount: (prev.imageCount || 1) + 1 }))}
-                    className="p-1 px-2 hover:bg-citrus-50 rounded-lg transition-colors"
-                  >
-                    <Plus className="w-3 h-3 text-citrus-600"/>
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Level Kognitif */}
         <div className="space-y-4 border-t border-citrus-100 pt-6">
           <label className={labelClass}>Level Kognitif</label>
           <div className="flex flex-wrap gap-3">
