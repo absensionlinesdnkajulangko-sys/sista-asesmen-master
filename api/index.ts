@@ -42,7 +42,6 @@ const formatMaterialsHelper = (material: any) => {
 // ===================================================================
 app.post("/api/generate/soal", async (req, res) => {
   try {
-    // PERBAIKAN: Mengekstrak customInstruction yang dikirim oleh frontend
     const { customInstruction, ...data } = req.body;
     const ai = getGeminiClient();
     
@@ -52,6 +51,7 @@ app.post("/api/generate/soal", async (req, res) => {
 
     const formattedMaterials = formatMaterialsHelper(data.material);
 
+    // PERBAIKAN: Menghapus instruksi imageUrl dan menyelaraskan struktur JSON
     const prompt = `
       Bertindaklah sebagai Pakar Asesmen Kurikulum Merdeka dan Ahli Evaluasi Pendidikan Indonesia.
       Tugas Anda adalah memproduksi INSTRUMEN BUTIR SOAL SAJA berdasarkan data input berikut.
@@ -68,14 +68,12 @@ app.post("/api/generate/soal", async (req, res) => {
       - Tahun Ajaran: ${data.academicYear}
       - Konfigurasi Soal: ${configs}
       - Level Kognitif: ${data.cognitiveLevel.join(", ")}
-      - Gunakan Stimulus Gambar: ${data.withImages ? 'YA (Hasilkan deskripsi visual)' : 'TIDAK'}
       
       INSTRUKSI KHUSUS LEMBAR SOAL:
       1. Distribusikan total konfigurasi soal secara otomatis, merata, dan proporsional ke SELURUH materi pokok yang diinputkan.
       2. Pilihan Ganda: WAJIB menyertakan property "options" sebagai array of strings tanpa abjad penanda (Jangan sertakan "A.", "B.", dll). Jumlah pilihan harus ${data.questionConfigs.find((c: any) => c.type === 'Pilihan Ganda')?.optionCount || 4}.
-      3. Pilihan Ganda Kompleks: WAJIB memiliki beberapa opsi di "multiOptions". Bagian "isCorrect" di-set false atau true secara acak namun logis (akan divalidasi saat pembuat kunci).
-      4. Gambar: JIKA stimulus membutuhkan gambar, sertakan property "imageUrl" dengan format "IMAGE_STIMULUS: [deskripsi detail gambar]".
-      5. Pada rute ini, Anda hanya fokus membuat struktur pertanyaan, teks stimulus, dan opsi jawaban saja. Nilai "answerKey" dan "explanation" CUKUP DIISI STRING KOSONG "" atau "-" saja terlebih dahulu.
+      3. Pilihan Ganda Kompleks: WAJIB memiliki beberapa opsi di "multiOptions". Bagian "isCorrect" di-set false atau true secara acak namun logis.
+      4. Pada rute ini, Anda hanya fokus membuat struktur pertanyaan, teks stimulus bacaan (jika ada), dan opsi jawaban. Nilai "answerKey" dan "score" CUKUP DIISI STRING KOSONG "" saja terlebih dahulu.
 
       STRUKTUR JSON OUTPUT WAJIB:
       {
@@ -90,15 +88,15 @@ app.post("/api/generate/soal", async (req, res) => {
           {
             "number": 1,
             "type": "Pilihan Ganda",
-            "stimulus": "Teks bacaan stimulus jika ada",
+            "stimulus": "Teks bacaan literasi (Kosongkan jika tidak ada)",
             "text": "Kalimat pertanyaan soal",
             "options": ["Pilihan A", "Pilihan B", "Pilihan C", "Pilihan D"],
             "multiOptions": [{"text": "Opsi A", "isCorrect": false}],
             "matchingPairs": [{"prompt": "Pernyataan A", "answer": ""}],
             "answerKey": "",
-            "explanation": "",
+            "score": "",
             "cognitiveLevel": "MOTS",
-            "imageUrl": ""
+            "imagePrompt": ""
           }
         ]
       }
@@ -115,7 +113,7 @@ app.post("/api/generate/soal", async (req, res) => {
     const cleanText = text.replace(/```json\n?/, '').replace(/\n?```/, '').trim();
     const rawData = JSON.parse(cleanText);
 
-    // Normalisasi struktur output soal
+    // PERBAIKAN: Menyelaraskan hasil parsing dengan nama properti yang baru (imagePrompt & score)
     const parsedData = {
       header: {
         schoolName: rawData.header?.schoolName || data.schoolName,
@@ -133,11 +131,11 @@ app.post("/api/generate/soal", async (req, res) => {
         multiOptions: q.multiOptions || [],
         matchingPairs: q.matchingPairs || [],
         answerKey: "",
-        explanation: "",
+        score: "",
         cognitiveLevel: q.cognitiveLevel || "MOTS",
-        imageUrl: q.imageUrl || ""
+        imagePrompt: q.imagePrompt || ""
       })),
-      kisiKisi: [] // Kosong, diisi via endpoint terpisah
+      kisiKisi: [] 
     };
 
     res.json(parsedData);
@@ -152,10 +150,10 @@ app.post("/api/generate/soal", async (req, res) => {
 // ===================================================================
 app.post("/api/generate/kunci", async (req, res) => {
   try {
-    // PERBAIKAN: Mengekstrak customInstruction dari request frontend
     const { header, questions, customInstruction } = req.body; 
     const ai = getGeminiClient();
 
+    // PERBAIKAN: Meminta AI untuk mengeluarkan field 'score' dan bukan 'explanation'
     const prompt = `
       Bertindaklah sebagai Pakar Evaluasi Pendidikan. Tugas Anda adalah menganalisis daftar instrumen soal di bawah ini dan merumuskan KUNCI JAWABAN yang valid beserta PEMBAHASAN/RUBRIK PENILAIAN yang mendalam untuk setiap butir soal.
 
@@ -170,9 +168,7 @@ app.post("/api/generate/kunci", async (req, res) => {
       - Pilihan Ganda Kompleks: Berikan array/list teks opsi mana saja yang bernilai benar.
       - Benar Salah: Tulis kunci jawaban berupa teks "BENAR" atau "SALAH".
       - Isian Singkat: Berikan kunci jawaban yang pendek, tepat, dan baku.
-      - Uraian: Berikan poin jawaban ideal beserta kriteria rubrik skor nilai di dalam kolom deskripsi penjelasan.
-
-      Kembalikan data dalam bentuk array of objects "questions" yang strukturnya sama persis, namun sekarang nilai properti "answerKey" dan "explanation" WAJIB TELAH TERISI LENGKAP DAN VALID.
+      - Uraian: Berikan poin jawaban ideal.
 
       STRUKTUR OUTPUT JSON:
       {
@@ -180,7 +176,7 @@ app.post("/api/generate/kunci", async (req, res) => {
           {
             "number": 1,
             "answerKey": "Jawaban Benar",
-            "explanation": "Alasan mendalam mengapa jawaban tersebut benar dan bagaimana rubrik poinnya."
+            "score": "Isi dengan Pembahasan Materi dan Analisis Skor sesuai aturan pada customInstruction."
           }
         ]
       }
@@ -197,13 +193,13 @@ app.post("/api/generate/kunci", async (req, res) => {
     const cleanText = text.replace(/```json\n?/, '').replace(/\n?```/, '').trim();
     const rawData = JSON.parse(cleanText);
 
-    // Gabungkan kembali kunci jawaban dari AI ke dalam database pertanyaan frontend
+    // PERBAIKAN: Gabungkan dengan nama properti "score"
     const updatedQuestions = questions.map((origQ: any) => {
       const aiKeyData = (rawData.questions || []).find((item: any) => item.number === origQ.number);
       return {
         ...origQ,
         answerKey: aiKeyData?.answerKey || "A",
-        explanation: aiKeyData?.explanation || "Belum ada pembahasan."
+        score: aiKeyData?.score || "Belum ada pembahasan."
       };
     });
 
@@ -219,7 +215,6 @@ app.post("/api/generate/kunci", async (req, res) => {
 // ===================================================================
 app.post("/api/generate/kisi-kisi", async (req, res) => {
   try {
-    // PERBAIKAN: Mengekstrak customInstruction dari request frontend
     const { formInput, questions, customInstruction } = req.body; 
     const ai = getGeminiClient();
 
@@ -275,7 +270,6 @@ app.post("/api/generate/kisi-kisi", async (req, res) => {
 
 // ===================================================================
 
-// Serve static files directly for production/Vercel environments
 const distPath = path.join(process.cwd(), "dist");
 app.use(express.static(distPath));
 app.get("*", (req, res) => {
