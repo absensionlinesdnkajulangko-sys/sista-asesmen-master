@@ -76,6 +76,7 @@ app.post("/api/generate/soal", async (req, res) => {
       3. Pilihan Ganda Kompleks: WAJIB memiliki beberapa opsi di "multiOptions". Bagian "isCorrect" di-set false atau true secara acak namun logis (akan divalidasi saat pembuat kunci).
       4. Gambar: JIKA stimulus membutuhkan gambar, sertakan property "imageUrl" dengan format "IMAGE_STIMULUS: [deskripsi detail gambar]".
       5. Pada rute ini, Anda hanya fokus membuat struktur pertanyaan, teks stimulus, dan opsi jawaban saja. Nilai "answerKey" dan "explanation" CUKUP DIISI STRING KOSONG "" atau "-" saja terlebih dahulu.
+      6. PENTING: Jika data input "Gunakan Stimulus Gambar" adalah YA, Anda WAJIB menyertakan properti "imagePrompt" yang berisi deskripsi visual mendetail dalam bahasa Inggris untuk setidaknya 40-50% dari total soal. JIKA TIDAK MEMBUTUHKAN GAMBAR, isi "imagePrompt" dengan string kosong "".
 
       STRUKTUR JSON OUTPUT WAJIB:
       {
