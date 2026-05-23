@@ -117,28 +117,30 @@ app.post("/api/generate/soal", async (req, res) => {
 
     // Normalisasi struktur output soal
     const parsedData = {
-      header: {
-        schoolName: rawData.header?.schoolName || data.schoolName,
-        subject: rawData.header?.subject || data.subject,
-        classSemester: rawData.header?.classSemester || `${data.grade} / ${data.semester}`,
-        material: rawData.header?.material || "Materi Pokok",
-        timeLimit: rawData.header?.timeLimit || data.timeAllocation || "60 Menit"
-      },
-      questions: (rawData.questions || []).map((q: any, idx: number) => ({
-        number: q.number || (idx + 1),
-        type: q.type || "Pilihan Ganda",
-        stimulus: q.stimulus || "",
-        text: q.text || "",
-        options: (q.options || []).map((opt: string) => typeof opt === 'string' ? opt.replace(/^[A-E]\.\s*/i, '') : opt),
-        multiOptions: q.multiOptions || [],
-        matchingPairs: q.matchingPairs || [],
-        answerKey: "",
-        explanation: "",
-        cognitiveLevel: q.cognitiveLevel || "MOTS",
-        imageUrl: q.imageUrl || ""
-      })),
-      kisiKisi: [] // Kosong, diisi via endpoint terpisah
-    };
+  header: {
+    schoolName: rawData.header?.schoolName || data.schoolName,
+    subject: rawData.header?.subject || data.subject,
+    classSemester: rawData.header?.classSemester || `${data.grade} / ${data.semester}`,
+    material: rawData.header?.material || "Materi Pokok",
+    timeLimit: rawData.header?.timeLimit || data.timeAllocation || "60 Menit"
+  },
+  questions: (rawData.questions || []).map((q: any, idx: number) => ({
+    number: q.number || (idx + 1),
+    type: q.type || "Pilihan Ganda",
+    stimulus: q.stimulus || "",
+    text: q.text || "",
+    // TAMBAHKAN BARIS DI BAWAH INI:
+    imagePrompt: q.imagePrompt || "", 
+    options: (q.options || []).map((opt: string) => typeof opt === 'string' ? opt.replace(/^[A-E]\.\s*/i, '') : opt),
+    multiOptions: q.multiOptions || [],
+    matchingPairs: q.matchingPairs || [],
+    answerKey: "",
+    explanation: "",
+    cognitiveLevel: q.cognitiveLevel || "MOTS",
+    imageUrl: q.imageUrl || ""
+  })),
+  kisiKisi: [] 
+};
 
     res.json(parsedData);
   } catch (error: any) {
