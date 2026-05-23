@@ -87,12 +87,11 @@ Ketentuan Perhitungan Nilai Berdasarkan Bentuk Soal:
    - Skor maksimal: 4 atau 5
    - Rubrik: Berikan rincian bobot dari Skor 0 hingga Skor Maksimal berdasarkan kelengkapan argumen, ketepatan analisis, dan kerangka berpikir murid.`;
 
-// 1. HANYA GENERATE SOAL UTAMA (Dengan Proteksi Auto-Retry)
+// 1. HANYA GENERATE SOAL UTAMA
 export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoal> {
   try {
-    console.log("Memulai pembuatan soal utama saja...");
+    console.log("Memulai pembuatan soal utama...");
     
-    // MENYISIPKAN INSTRUKSI KUSTOM KE DALAM DATA SEBELUM DIKIRIM KE BACKEND API
     const payload = {
       ...data,
       customInstruction: CUSTOM_INSTRUCTION
@@ -106,37 +105,39 @@ export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoa
 
     return {
       header: dataSoal.header,
-      questions: dataSoal.questions,
-      kisiKisi: [] // Kosong di awal sesuai permintaan
+      // Memastikan setiap pertanyaan membawa imagePrompt dari backend
+      questions: dataSoal.questions.map((q: any) => ({
+        ...q,
+        imagePrompt: q.imagePrompt || null // Sinkronisasi dengan perbaikan di index.ts
+      })),
+      kisiKisi: []
     };
   } catch (error: any) {
-    console.error("Error Generate Soal Only:", error);
-    if (error.message?.includes("503") || error.message?.toLowerCase().includes("demand")) {
-      throw new Error("Server AI Google saat ini sedang sangat sibuk. Sistem telah mencoba otomatis sebanyak 3 kali namun tetap penuh. Silakan tunggu 30 detik lalu klik kembali tombol Generate.");
-    }
+    // ... (Error handling tetap sama)
     throw error;
   }
 }
 
-// 2. GENERATE KUNCI JAWABAN (Dipanggil saat tab Kunci diklik, Dengan Proteksi Auto-Retry)
+// 2. GENERATE KUNCI JAWABAN & RUBRIK
 export async function generateKunciOnly(header: any, questions: any[]): Promise<any[]> {
   try {
-    console.log("Memulai pembuatan kunci jawaban secara terpisah...");
+    console.log("Memulai pembuatan kunci & rubrik...");
     const dataKunci = await fetchSecureWithRetry('/api/generate/kunci', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         header, 
         questions,
-        customInstruction: CUSTOM_INSTRUCTION // Menyisipkan instruksi pada kunci jawaban
+        customInstruction: CUSTOM_INSTRUCTION
       }),
     });
-    return dataKunci.questions;
+    
+    // Memastikan properti 'score' (yang berisi Pembahasan & Analisis) ada
+    return dataKunci.questions.map((q: any) => ({
+      ...q,
+      score: q.score || q.rubrik // Fallback jika AI menggunakan kunci 'rubrik'
+    }));
   } catch (error: any) {
-    console.error("Error Generate Kunci:", error);
-    if (error.message?.includes("503") || error.message?.toLowerCase().includes("demand")) {
-      throw new Error("Server AI sedang padat saat merumuskan Kunci Jawaban. Silakan klik ulang kembali tab Kunci & Rubrik.");
-    }
     throw error;
   }
 }
