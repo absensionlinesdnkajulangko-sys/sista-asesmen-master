@@ -356,19 +356,29 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
                           </div>
                         </div>
                       ) : (
-                        <div className="no-print flex gap-3">
-                          <button 
-                            onClick={() => handleChatGPTRedirect(q)} 
-                            className="gradient-citrus text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm hover:shadow-md transition-all"
-                          >
-                            <ExternalLink className="w-4 h-4" /> Buat Gambar di ChatGPT
-                          </button>
-                          <button 
-                            onClick={() => handlePasteImageUrl(q.number)} 
-                            className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all"
-                          >
-                            Tempel URL Gambar
-                          </button>
+                        <div className="no-print flex flex-col gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl max-w-2xl">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-amber-800 font-bold text-xs uppercase tracking-wider flex items-center gap-1">
+                              <span className="text-lg">🖼️</span> Area Gambar Dibutuhkan
+                            </span>
+                            <p className="text-sm text-amber-900 italic font-medium bg-white/50 p-2 rounded border border-amber-100">
+                              " {q.imagePrompt} "
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            <button 
+                              onClick={() => handleChatGPTRedirect(q)} 
+                              className="gradient-citrus text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm hover:shadow-md transition-all"
+                            >
+                              <ExternalLink className="w-4 h-4" /> Buat Gambar di ChatGPT
+                            </button>
+                            <button 
+                              onClick={() => handlePasteImageUrl(q.number)} 
+                              className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all"
+                            >
+                              Tempel URL Gambar
+                            </button>
+                          </div>
                         </div>
                       )
                     )}
