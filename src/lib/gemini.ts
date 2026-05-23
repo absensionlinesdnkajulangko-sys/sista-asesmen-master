@@ -39,14 +39,10 @@ async function fetchSecureWithRetry(url: string, options: any, retries = 3, back
   }
 }
 
-// PERBAIKAN KRITIKAL: Memaksa Gemini membuat kriteria logika skor bergradasi, istilah 'murid', dan variasi acak untuk deskripsi gambar khusus (imagePrompt)
-const CUSTOM_INSTRUCTION = `PENTING: Gunakan selalu kata 'murid' untuk merujuk pada anak didik. Jangan pernah menggunakan istilah 'peserta didik' di dalam teks output yang Anda hasilkan.
-
-STRICT RULE - PEMILIHAN STIMULUS VISUAL OTOMATIS SECARA ACAK:
-Setiap kali Anda merancang pertanyaan, Anda WAJIB melakukan hal berikut secara acak:
-1. Lakukan pemilihan acak secara internal: Berikan peluang sekitar 40% hingga 50% bagi sebuah soal untuk memiliki stimulus visual (membutuhkan gambar), dan sisanya adalah soal berbasis teks murni.
-2. JIKA SOAL TERPILIH MEMILIKI GAMBAR: Tambahkan properti 'imagePrompt' di dalam objek soal. Isi dari 'imagePrompt' harus berupa deskripsi gambar pendukung yang sangat spesifik, akurat, dan relevan dengan esensi soal tersebut dalam BAHASA INGGRIS. Jangan memasukkan teks pertanyaan ke dalamnya, melainkan deskripsikan objek visualnya secara jelas (contoh: "A clear 3D mathematical diagram of a single cube with side measurements written on it").
-3. JIKA SOAL TIDAK MEMILIKI GAMBAR: JANGAN menambahkan properti 'imagePrompt' ke dalam objek soal tersebut (atau isi nilainya dengan null/string kosong).
+// PERBAIKAN: Mengubah instruksi menjadi dinamis untuk membaca setelan gambar dari user, 
+// tanpa mengurangi instruksi wajib analisis skor & penggunaan kata 'murid'.
+function buildCustomInstruction(data?: Partial<SoalFormData>) {
+  const baseRule = `PENTING: Gunakan selalu kata 'murid' untuk merujuk pada anak didik. Jangan pernah menggunakan istilah 'peserta didik' di dalam teks output yang Anda hasilkan.
 
 STRICT RULE - PEMBAHASAN DAN LOGIKA SKOR/RUBRIK WAJIB TERPISAH:
 Setiap soal WAJIB memiliki properti 'score' yang isinya terdiri dari dua bagian utama dengan format berikut:
@@ -87,15 +83,30 @@ Ketentuan Perhitungan Nilai Berdasarkan Bentuk Soal:
    - Skor maksimal: 4 atau 5
    - Rubrik: Berikan rincian bobot dari Skor 0 hingga Skor Maksimal berdasarkan kelengkapan argumen, ketepatan analisis, dan kerangka berpikir murid.`;
 
+  let imageRule = "";
+  
+  if (data && data.withImages && data.imageCount && data.imageCount > 0) {
+    imageRule = `\n\nSTRICT RULE - PEMILIHAN STIMULUS VISUAL (SOAL BERGAMBAR):
+Berdasarkan permintaan sistem, Anda WAJIB menyertakan stimulus visual pada TEPAT ${data.imageCount} soal dari total soal yang Anda buat.
+1. UNTUK ${data.imageCount} SOAL BERGAMBAR TERSEBUT: Tambahkan properti 'imagePrompt' di dalam objek soal. Isi dari 'imagePrompt' harus berupa deskripsi gambar pendukung yang sangat spesifik, akurat, dan relevan dengan esensi soal tersebut dalam BAHASA INGGRIS. Jangan memasukkan teks pertanyaan ke dalamnya, melainkan deskripsikan objek visualnya secara jelas (contoh: "A clear 3D mathematical diagram of a single cube with side measurements written on it").
+2. UNTUK SISA SOAL LAINNYA: JANGAN menambahkan properti 'imagePrompt' ke dalam objek soal (atau isi nilainya dengan string kosong).`;
+  } else {
+    imageRule = `\n\nSTRICT RULE - TANPA STIMULUS VISUAL:
+Sistem menetapkan untuk tidak menggunakan gambar. JANGAN menambahkan properti 'imagePrompt' ke dalam objek soal mana pun. Semua soal harus murni berbasis teks.`;
+  }
+
+  return baseRule + imageRule;
+}
+
 // 1. HANYA GENERATE SOAL UTAMA (Dengan Proteksi Auto-Retry)
 export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoal> {
   try {
     console.log("Memulai pembuatan soal utama saja...");
     
-    // MENYISIPKAN INSTRUKSI KUSTOM KE DALAM DATA SEBELUM DIKIRIM KE BACKEND API
+    // Menyisipkan instruksi yang sudah beradaptasi dengan form input (khususnya jumlah gambar)
     const payload = {
       ...data,
-      customInstruction: CUSTOM_INSTRUCTION
+      customInstruction: buildCustomInstruction(data)
     };
 
     const dataSoal = await fetchSecureWithRetry('/api/generate/soal', {
@@ -128,7 +139,7 @@ export async function generateKunciOnly(header: any, questions: any[]): Promise<
       body: JSON.stringify({ 
         header, 
         questions,
-        customInstruction: CUSTOM_INSTRUCTION // Menyisipkan instruksi pada kunci jawaban
+        customInstruction: buildCustomInstruction() // Pakai rule dasar
       }),
     });
     return dataKunci.questions;
@@ -151,7 +162,7 @@ export async function generateKisiOnly(formInput: SoalFormData, questions: any[]
       body: JSON.stringify({ 
         formInput, 
         questions,
-        customInstruction: CUSTOM_INSTRUCTION // Menyisipkan instruksi pada kisi-kisi
+        customInstruction: buildCustomInstruction(formInput) // Ikutkan konteks form jika diperlukan
       }),
     });
     return dataKisi.kisiKisi;
