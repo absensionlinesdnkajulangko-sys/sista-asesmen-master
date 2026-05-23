@@ -24,7 +24,8 @@ export interface SoalFormData {
   material: string[];     // 2. MENGUBAH STRING MENJADI ARRAY STRING
   cp: string; 
   tp: string[];
-  withImages?: boolean;
+  withImages?: boolean;   // Status toggle gambar aktif/tidak
+  imageCount?: number;    // <-- TAMBAHKAN BARIS INI: Untuk menyimpan jumlah soal bergambar dari form
   questionConfigs: QuestionConfig[]; 
   cognitiveLevel: string[]; 
 }
@@ -35,13 +36,13 @@ export interface QuestionItem {
   text: string;
   stimulus?: string; // Text stimulus (literacy/numeracy)
   imageUrl?: string; // URL for image stimulus
-  imagePrompt?: string; // <-- Tambahkan baris ini untuk mendukung fitur gambar AI
+  imagePrompt?: string; // Untuk mendukung fitur deskripsi/prompt gambar AI ke Gemini
   options?: string[]; // For Multiple Choice / True-False
   multiOptions?: { text: string; isCorrect: boolean }[]; // For PGK
   matchingPairs?: { prompt: string; answer: string }[]; // For Matching
   answerKey: string;
   explanation: string; // Akan digunakan untuk "Pembahasan Materi"
-  score: string;       // <-- Tambahkan baris ini untuk menyimpan "Analisis Skor"
+  score: string;       // Untuk menyimpan "Analisis Skor"
   cognitiveLevel: string;
 }
 
@@ -53,6 +54,7 @@ export interface KisiKisiItem {
   indikatorSoal: string;
   levelKognitif: string;
   bentukSoal: string;
+  isBergambar?: boolean; // <-- OPSIONAL: Untuk menandai di tabel kisi-kisi mana soal yang menggunakan gambar
 }
 
 export interface GeneratedSoal {
@@ -61,7 +63,7 @@ export interface GeneratedSoal {
     subject: string;
     classSemester: string;
     material?: string;
-    timeLimit: string; // Properti ini nantinya bisa Anda petakan dari formData.timeAllocation saat melakukan generate
+    timeLimit: string; // Dipetakan dari formData.timeAllocation saat melakukan generate
   };
   questions: QuestionItem[];
   kisiKisi: KisiKisiItem[];
