@@ -45,18 +45,20 @@ app.post("/api/generate/soal", async (req, res) => {
     const { customInstruction, ...data } = req.body;
     const ai = getGeminiClient();
     
-    const configs = data.questionConfigs.map((c: any) => 
+    // PERBAIKAN: Menambahkan fallback array kosong || [] untuk mencegah crash
+    const configs = (data.questionConfigs || []).map((c: any) => 
       `${c.count} soal ${c.type} ${c.type === 'Pilihan Ganda' ? `dengan ${c.optionCount} pilihan jawaban` : ''}`
     ).join(", ");
 
     const formattedMaterials = formatMaterialsHelper(data.material);
 
-    // PERBAIKAN: Menghapus instruksi imageUrl dan menyelaraskan struktur JSON
+    // PERBAIKAN: Mengubah contoh value "imagePrompt" di dalam struktur JSON 
+    // agar AI tidak menganggapnya selalu string kosong.
     const prompt = `
       Bertindaklah sebagai Pakar Asesmen Kurikulum Merdeka dan Ahli Evaluasi Pendidikan Indonesia.
       Tugas Anda adalah memproduksi INSTRUMEN BUTIR SOAL SAJA berdasarkan data input berikut.
       
-      PANDUAN ATURAN BAHASA UTAMA:
+      PANDUAN ATURAN DAN INSTRUKSI KHUSUS (WAJIB DIIKUTI):
       ${customInstruction || "Gunakan istilah bahasa Indonesia yang baku."}
 
       DATA INPUT:
@@ -67,11 +69,11 @@ app.post("/api/generate/soal", async (req, res) => {
       - Kelas/Semester: ${data.grade} / ${data.semester}
       - Tahun Ajaran: ${data.academicYear}
       - Konfigurasi Soal: ${configs}
-      - Level Kognitif: ${data.cognitiveLevel.join(", ")}
+      - Level Kognitif: ${(data.cognitiveLevel || []).join(", ")}
       
       INSTRUKSI KHUSUS LEMBAR SOAL:
       1. Distribusikan total konfigurasi soal secara otomatis, merata, dan proporsional ke SELURUH materi pokok yang diinputkan.
-      2. Pilihan Ganda: WAJIB menyertakan property "options" sebagai array of strings tanpa abjad penanda (Jangan sertakan "A.", "B.", dll). Jumlah pilihan harus ${data.questionConfigs.find((c: any) => c.type === 'Pilihan Ganda')?.optionCount || 4}.
+      2. Pilihan Ganda: WAJIB menyertakan property "options" sebagai array of strings tanpa abjad penanda (Jangan sertakan "A.", "B.", dll). Jumlah pilihan harus ${(data.questionConfigs || []).find((c: any) => c.type === 'Pilihan Ganda')?.optionCount || 4}.
       3. Pilihan Ganda Kompleks: WAJIB memiliki beberapa opsi di "multiOptions". Bagian "isCorrect" di-set false atau true secara acak namun logis.
       4. Pada rute ini, Anda hanya fokus membuat struktur pertanyaan, teks stimulus bacaan (jika ada), dan opsi jawaban. Nilai "answerKey" dan "score" CUKUP DIISI STRING KOSONG "" saja terlebih dahulu.
 
@@ -96,7 +98,7 @@ app.post("/api/generate/soal", async (req, res) => {
             "answerKey": "",
             "score": "",
             "cognitiveLevel": "MOTS",
-            "imagePrompt": ""
+            "imagePrompt": "[Isi dengan deskripsi visual bahasa Inggris JIKA diminta di instruksi khusus, atau string kosong jika soal murni teks]"
           }
         ]
       }
@@ -113,7 +115,6 @@ app.post("/api/generate/soal", async (req, res) => {
     const cleanText = text.replace(/```json\n?/, '').replace(/\n?```/, '').trim();
     const rawData = JSON.parse(cleanText);
 
-    // PERBAIKAN: Menyelaraskan hasil parsing dengan nama properti yang baru (imagePrompt & score)
     const parsedData = {
       header: {
         schoolName: rawData.header?.schoolName || data.schoolName,
@@ -122,19 +123,27 @@ app.post("/api/generate/soal", async (req, res) => {
         material: rawData.header?.material || "Materi Pokok",
         timeLimit: rawData.header?.timeLimit || data.timeAllocation || "60 Menit"
       },
-      questions: (rawData.questions || []).map((q: any, idx: number) => ({
-        number: q.number || (idx + 1),
-        type: q.type || "Pilihan Ganda",
-        stimulus: q.stimulus || "",
-        text: q.text || "",
-        options: (q.options || []).map((opt: string) => typeof opt === 'string' ? opt.replace(/^[A-E]\.\s*/i, '') : opt),
-        multiOptions: q.multiOptions || [],
-        matchingPairs: q.matchingPairs || [],
-        answerKey: "",
-        score: "",
-        cognitiveLevel: q.cognitiveLevel || "MOTS",
-        imagePrompt: q.imagePrompt || ""
-      })),
+      questions: (rawData.questions || []).map((q: any, idx: number) => {
+        // Validasi dan bersihkan jika AI memberikan jawaban default dari template
+        let cleanImagePrompt = q.imagePrompt || "";
+        if (cleanImagePrompt.includes("[Isi dengan deskripsi visual")) {
+          cleanImagePrompt = "";
+        }
+
+        return {
+          number: q.number || (idx + 1),
+          type: q.type || "Pilihan Ganda",
+          stimulus: q.stimulus || "",
+          text: q.text || "",
+          options: (q.options || []).map((opt: string) => typeof opt === 'string' ? opt.replace(/^[A-E]\.\s*/i, '') : opt),
+          multiOptions: q.multiOptions || [],
+          matchingPairs: q.matchingPairs || [],
+          answerKey: "",
+          score: "",
+          cognitiveLevel: q.cognitiveLevel || "MOTS",
+          imagePrompt: cleanImagePrompt
+        };
+      }),
       kisiKisi: [] 
     };
 
@@ -153,7 +162,6 @@ app.post("/api/generate/kunci", async (req, res) => {
     const { header, questions, customInstruction } = req.body; 
     const ai = getGeminiClient();
 
-    // PERBAIKAN: Meminta AI untuk mengeluarkan field 'score' dan bukan 'explanation'
     const prompt = `
       Bertindaklah sebagai Pakar Evaluasi Pendidikan. Tugas Anda adalah menganalisis daftar instrumen soal di bawah ini dan merumuskan KUNCI JAWABAN yang valid beserta PEMBAHASAN/RUBRIK PENILAIAN yang mendalam untuk setiap butir soal.
 
@@ -193,7 +201,6 @@ app.post("/api/generate/kunci", async (req, res) => {
     const cleanText = text.replace(/```json\n?/, '').replace(/\n?```/, '').trim();
     const rawData = JSON.parse(cleanText);
 
-    // PERBAIKAN: Gabungkan dengan nama properti "score"
     const updatedQuestions = questions.map((origQ: any) => {
       const aiKeyData = (rawData.questions || []).find((item: any) => item.number === origQ.number);
       return {
