@@ -39,8 +39,7 @@ async function fetchSecureWithRetry(url: string, options: any, retries = 3, back
   }
 }
 
-// PERBAIKAN: Mengubah instruksi menjadi dinamis untuk membaca setelan gambar dari user, 
-// tanpa mengurangi instruksi wajib analisis skor & penggunaan kata 'murid'.
+// PERBAIKAN: Mengubah instruksi menjadi sangat ketat agar AI tidak salah meletakkan deskripsi gambar ke dalam stimulus
 function buildCustomInstruction(data?: Partial<SoalFormData>) {
   const baseRule = `PENTING: Gunakan selalu kata 'murid' untuk merujuk pada anak didik. Jangan pernah menggunakan istilah 'peserta didik' di dalam teks output yang Anda hasilkan.
 
@@ -58,38 +57,26 @@ Ketentuan Detail:
 
 Ketentuan Perhitungan Nilai Berdasarkan Bentuk Soal:
 (Gunakan panduan berikut untuk mengisi 'ANALISIS SKOR')
-
-1. Pilihan Ganda (PG)
-   - Skor maksimal: 1
-   - Rubrik: Skor 1 jika jawaban benar, Skor 0 jika salah.
-
-2. Pilihan Ganda Kompleks (PGK)
-   - Skor maksimal: [Jumlah Opsi Benar]
-   - Rubrik: Skor diberikan proporsional (1 poin per jawaban benar).
-
-3. Benar Salah (BS)
-   - Skor maksimal: 1
-   - Rubrik: Skor 1 jika tepat memilih Benar/Salah, Skor 0 jika sebaliknya.
-
-4. Menjodohkan
-   - Skor maksimal: [Jumlah Pasangan]
-   - Rubrik: Skor 1 untuk setiap pasangan yang dihubungkan dengan benar.
-
-5. Isian Singkat
-   - Skor maksimal: 2
-   - Rubrik: Skor 2 (Jawaban tepat), Skor 1 (Jawaban mendekati/kurang lengkap), Skor 0 (Salah).
-
-6. Uraian
-   - Skor maksimal: 4 atau 5
-   - Rubrik: Berikan rincian bobot dari Skor 0 hingga Skor Maksimal berdasarkan kelengkapan argumen, ketepatan analisis, dan kerangka berpikir murid.`;
+1. Pilihan Ganda (PG) -> Skor maksimal: 1 (Skor 1 jika benar, 0 jika salah).
+2. Pilihan Ganda Kompleks (PGK) -> Skor maksimal: [Jumlah Opsi Benar] (Proporsional).
+3. Benar Salah (BS) -> Skor maksimal: 1.
+4. Menjodohkan -> Skor maksimal: [Jumlah Pasangan].
+5. Isian Singkat -> Skor maksimal: 2.
+6. Uraian -> Skor maksimal: 4 atau 5.`;
 
   let imageRule = "";
   
   if (data && data.withImages && data.imageCount && data.imageCount > 0) {
-    imageRule = `\n\nSTRICT RULE - PEMILIHAN STIMULUS VISUAL (SOAL BERGAMBAR):
-Berdasarkan permintaan sistem, Anda WAJIB menyertakan stimulus visual pada TEPAT ${data.imageCount} soal dari total soal yang Anda buat.
-1. UNTUK ${data.imageCount} SOAL BERGAMBAR TERSEBUT: Tambahkan properti 'imagePrompt' di dalam objek soal. Isi dari 'imagePrompt' harus berupa deskripsi gambar pendukung yang sangat spesifik, akurat, dan relevan dengan esensi soal tersebut dalam BAHASA INGGRIS. Jangan memasukkan teks pertanyaan ke dalamnya, melainkan deskripsikan objek visualnya secara jelas (contoh: "A clear 3D mathematical diagram of a single cube with side measurements written on it").
-2. UNTUK SISA SOAL LAINNYA: JANGAN menambahkan properti 'imagePrompt' ke dalam objek soal (atau isi nilainya dengan string kosong).`;
+    imageRule = `\n\nSTRICT RULE - PEMBUATAN SOAL BERGAMBAR (WAJIB DIIKUTI 100%):
+Sistem meminta agar TEPAT ${data.imageCount} soal memiliki visual/gambar.
+
+TUGAS ANDA UNTUK ${data.imageCount} SOAL TERSEBUT:
+1. Anda WAJIB menyisipkan properti JSON dengan nama persis "imagePrompt" (tipe data string).
+2. Isi "imagePrompt" dengan DESKRIPSI GAMBAR DALAM BAHASA INGGRIS yang sangat detail. Contoh: "A 2D vector illustration of the Garuda Pancasila shield, solid white background, flat design."
+3. LARANGAN KERAS: JANGAN PERNAH menaruh deskripsi gambar di dalam properti "stimulus". Properti "stimulus" HANYA untuk teks literasi/bacaan paragraf.
+4. Di properti "text", langsung saja buat pertanyaannya.
+
+Untuk soal sisanya yang TIDAK bergambar, KOSONGKAN properti "imagePrompt" (berikan string kosong "").`;
   } else {
     imageRule = `\n\nSTRICT RULE - TANPA STIMULUS VISUAL:
 Sistem menetapkan untuk tidak menggunakan gambar. JANGAN menambahkan properti 'imagePrompt' ke dalam objek soal mana pun. Semua soal harus murni berbasis teks.`;
@@ -98,12 +85,22 @@ Sistem menetapkan untuk tidak menggunakan gambar. JANGAN menambahkan properti 'i
   return baseRule + imageRule;
 }
 
-// 1. HANYA GENERATE SOAL UTAMA (Dengan Proteksi Auto-Retry)
+// 1. HANYA GENERATE SOAL UTAMA (Dengan Proteksi Auto-Retry & Validasi Input)
 export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoal> {
   try {
     console.log("Memulai pembuatan soal utama saja...");
+
+    // CEGAT KESALAHAN INPUT PENGGUNA DI SINI
+    if (data.withImages && data.imageCount !== undefined && data.questionCount !== undefined) {
+      if (data.imageCount > data.questionCount) {
+        throw new Error(`Kesalahan Input: Anda meminta ${data.imageCount} soal bergambar, padahal total soal hanya ${data.questionCount}. Jumlah gambar tidak boleh melebihi total soal.`);
+      }
+      if (data.imageCount < 0) {
+        throw new Error("Kesalahan Input: Jumlah soal bergambar tidak boleh bernilai negatif.");
+      }
+    }
     
-    // Menyisipkan instruksi yang sudah beradaptasi dengan form input (khususnya jumlah gambar)
+    // Menyisipkan instruksi yang sudah beradaptasi dengan form input
     const payload = {
       ...data,
       customInstruction: buildCustomInstruction(data)
@@ -125,7 +122,7 @@ export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoa
     if (error.message?.includes("503") || error.message?.toLowerCase().includes("demand")) {
       throw new Error("Server AI Google saat ini sedang sangat sibuk. Sistem telah mencoba otomatis sebanyak 3 kali namun tetap penuh. Silakan tunggu 30 detik lalu klik kembali tombol Generate.");
     }
-    throw error;
+    throw error; // Ini akan melempar error validasi kita ke UI untuk ditampilkan ke user
   }
 }
 
@@ -162,7 +159,7 @@ export async function generateKisiOnly(formInput: SoalFormData, questions: any[]
       body: JSON.stringify({ 
         formInput, 
         questions,
-        customInstruction: buildCustomInstruction(formInput) // Ikutkan konteks form jika diperlukan
+        customInstruction: buildCustomInstruction(formInput) // Ikutkan konteks form
       }),
     });
     return dataKisi.kisiKisi;
