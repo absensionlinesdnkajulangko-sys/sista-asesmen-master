@@ -163,28 +163,40 @@ app.post("/api/generate/kunci", async (req, res) => {
     const ai = getGeminiClient();
 
     const prompt = `
-      Bertindaklah sebagai Pakar Evaluasi Pendidikan. Tugas Anda adalah menganalisis daftar instrumen soal di bawah ini dan merumuskan KUNCI JAWABAN yang valid beserta PEMBAHASAN/RUBRIK PENILAIAN yang mendalam untuk setiap butir soal.
-
-      PANDUAN ATURAN BAHASA UTAMA:
+      Bertindaklah sebagai Pakar Asesmen Kurikulum Merdeka.
+      Tugas Anda adalah memproduksi INSTRUMEN BUTIR SOAL SAJA berdasarkan data input berikut.
+      
+      PANDUAN ATURAN DAN INSTRUKSI KHUSUS:
       ${customInstruction || "Gunakan istilah bahasa Indonesia yang baku."}
 
-      SOAL YANG HARUS DIBUATKAN KUNCI & BAHASAN:
-      ${JSON.stringify(questions)}
+      INSTRUKSI PENTING UNTUK GAMBAR:
+      Anda diminta membuat total ${data.questionConfigs.reduce((acc: number, c: any) => acc + c.count, 0)} soal.
+      DARI TOTAL SOAL TERSEBUT, WAJIB BERIKAN TEPAT ${data.imageCount || 0} SOAL DENGAN GAMBAR.
+      
+      1. Untuk ${data.imageCount || 0} soal terpilih tersebut: 
+         - Isi properti "imagePrompt" dengan deskripsi visual detail (Bahasa Inggris).
+         - Pastikan properti "text" TIDAK mengandung deskripsi gambar tersebut, tapi harus relevan dengan gambar.
+      2. Untuk soal sisanya (tanpa gambar): 
+         - Kosongkan properti "imagePrompt" menjadi string kosong "".
+      3. Jangan pernah mencampur deskripsi gambar ke properti "stimulus".
 
-      PETUNJUK PENGISIAN JAWABAN:
-      - Pilihan Ganda: Berikan abjad jawaban yang benar saja (Contoh: "A" atau "B").
-      - Pilihan Ganda Kompleks: Berikan array/list teks opsi mana saja yang bernilai benar.
-      - Benar Salah: Tulis kunci jawaban berupa teks "BENAR" atau "SALAH".
-      - Isian Singkat: Berikan kunci jawaban yang pendek, tepat, dan baku.
-      - Uraian: Berikan poin jawaban ideal.
-
-      STRUKTUR OUTPUT JSON:
+      DATA INPUT:
+      - Mapel: ${data.subject}
+      - Materi: ${formattedMaterials}
+      - Konfigurasi: ${configs}
+      
+      STRUKTUR JSON OUTPUT WAJIB:
       {
+        "header": { ... },
         "questions": [
           {
             "number": 1,
-            "answerKey": "Jawaban Benar",
-            "score": "Isi dengan Pembahasan Materi dan Analisis Skor sesuai aturan pada customInstruction."
+            "type": "...",
+            "text": "Pertanyaan soal (tanpa deskripsi gambar)",
+            "stimulus": "Teks bacaan atau kosongkan",
+            "options": [...],
+            "imagePrompt": "Deskripsi gambar (Bahasa Inggris) JIKA soal ini terpilih, jika tidak terpilih isi string kosong ''",
+            "score": ""
           }
         ]
       }
