@@ -12,7 +12,7 @@ async function fetchSecureWithRetry(url: string, options: any, retries = 3, back
       const errorData = await response.json().catch(() => ({}));
       const errorMessage = errorData.error || "";
       
-      // Jika backend melempar 500 karena Google mengembalikan 503 (model overloaded / high demand)
+      // Jika backend melempar 500/429 karena masalah kuota atau server Google sibuk
       const isGoogleBusy = response.status === 500 && 
         (errorMessage.includes("503") || 
          errorMessage.toLowerCase().includes("demand") || 
@@ -21,7 +21,6 @@ async function fetchSecureWithRetry(url: string, options: any, retries = 3, back
       if (isGoogleBusy && retries > 0) {
         console.warn(`[FIDHAL TOUNA AI] Server sibuk saat mengakses ${url}. Mencoba ulang dalam ${backoff}ms... (Sisa percobaan: ${retries})`);
         await delay(backoff);
-        // Lakukan percobaan ulang dengan menaikkan jeda waktu tunggu (Exponential Backoff)
         return fetchSecureWithRetry(url, options, retries - 1, backoff * 1.5);
       }
       
@@ -30,7 +29,6 @@ async function fetchSecureWithRetry(url: string, options: any, retries = 3, back
     
     return await response.json();
   } catch (error: any) {
-    // Jika error jaringan murni terdeteksi membawa pesan demand, coba lagi
     if (retries > 0 && error.message?.toLowerCase().includes("demand")) {
       await delay(backoff);
       return fetchSecureWithRetry(url, options, retries - 1, backoff * 1.5);
@@ -39,12 +37,16 @@ async function fetchSecureWithRetry(url: string, options: any, retries = 3, back
   }
 }
 
-// PERBAIKAN KRITIKAL: Memaksa Gemini membuat kriteria logika skor bergradasi, istilah 'murid', dan variasi acak untuk deskripsi gambar khusus (imagePrompt)
+// PERBAIKAN UTAMA: Memperketat instruksi pembuatan soal Pilihan Ganda Kompleks (PGK) agar array teks pernyataan tidak kosong
 const CUSTOM_INSTRUCTION = `PENTING: Gunakan selalu kata 'murid' untuk merujuk pada anak didik. Jangan pernah menggunakan istilah 'peserta didik' di dalam teks output yang Anda hasilkan.
+
+STRICT RULE - ATURAN PEMBUATAN SOAL PILIHAN GANDA KOMPLEKS (PGK):
+Khusus untuk soal dengan tipe "Pilihan Ganda Kompleks", Anda WAJIB mengisi properti 'multiOptions' dengan minimal 4 atau 5 kalimat pernyataan mandiri yang tekstual dan kontekstual materi terkait (Contoh format: ["Pernyataan konsep A benar", "Pernyataan analisis B salah", "Pernyataan C", "Pernyataan D"]). 
+DILARANG KERAS membiarkan properti 'multiOptions' kosong ([]) atau bernilai null jika jenis tipe soal tersebut adalah Pilihan Ganda Kompleks!
 
 STRICT RULE - PEMILIHAN STIMULUS VISUAL OTOMATIS SECARA ACAK:
 Setiap kali Anda merancang pertanyaan, Anda WAJIB melakukan hal berikut secara acak:
-1. Lakukan pemilihan acak secara internal: Berikan peluang sekitar 40% hingga 50% bagi sebuah soal untuk memiliki stimulus visual (membutuhkan gambar), dan sisanya adalah soal berbasis teks murni.
+1. Lakukan pemilihan acak secara internal: Berikan peluang sekitar 30% hingga 40% bagi sebuah soal untuk memiliki stimulus visual (membutuhkan gambar), dan sisanya adalah soal berbasis teks murni.
 2. JIKA SOAL TERPILIH MEMILIKI GAMBAR: Tambahkan properti 'imagePrompt' di dalam objek soal. Isi dari 'imagePrompt' harus berupa deskripsi gambar pendukung yang sangat spesifik, akurat, dan relevan dengan esensi soal tersebut dalam BAHASA INGGRIS. Jangan memasukkan teks pertanyaan ke dalamnya, melainkan deskripsikan objek visualnya secara jelas (contoh: "A clear 3D mathematical diagram of a single cube with side measurements written on it").
 3. JIKA SOAL TIDAK MEMILIKI GAMBAR: JANGAN menambahkan properti 'imagePrompt' ke dalam objek soal tersebut (atau isi nilainya dengan null/string kosong).
 
@@ -105,15 +107,17 @@ export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoa
 
     return {
       header: dataSoal.header,
-      // Memastikan setiap pertanyaan membawa imagePrompt dari backend
+      // PERBAIKAN SINKRONISASI: Menjamin multiOptions lolos ke UI Komponen agar opsi PGK muncul di layar
       questions: dataSoal.questions.map((q: any) => ({
         ...q,
-        imagePrompt: q.imagePrompt || null // Sinkronisasi dengan perbaikan di index.ts
+        imagePrompt: q.imagePrompt || null,
+        options: q.options || [],
+        multiOptions: q.multiOptions || [] 
       })),
       kisiKisi: []
     };
   } catch (error: any) {
-    // ... (Error handling tetap sama)
+    console.error("Error Frontend Soal Utama:", error);
     throw error;
   }
 }
@@ -132,17 +136,18 @@ export async function generateKunciOnly(header: any, questions: any[]): Promise<
       }),
     });
     
-    // Memastikan properti 'score' (yang berisi Pembahasan & Analisis) ada
+    // PERBAIKAN SINKRONISASI: Memetakan 'explanation' backend ke dalam 'score' agar tabel kunci terisi otomatis
     return dataKunci.questions.map((q: any) => ({
       ...q,
-      score: q.score || q.rubrik // Fallback jika AI menggunakan kunci 'rubrik'
+      score: q.explanation || q.score || q.rubrik || "Belum ada pembahasan."
     }));
   } catch (error: any) {
+    console.error("Error Frontend Kunci:", error);
     throw error;
   }
 }
 
-// 3. GENERATE KISI-KISI (Dipanggil saat tab Kisi-kisi diklik, Dengan Proteksi Auto-Retry)
+// 3. GENERATE KISI-KISI
 export async function generateKisiOnly(formInput: SoalFormData, questions: any[]): Promise<any[]> {
   try {
     console.log("Memulai pembuatan kisi-kisi secara terpisah...");
@@ -152,7 +157,7 @@ export async function generateKisiOnly(formInput: SoalFormData, questions: any[]
       body: JSON.stringify({ 
         formInput, 
         questions,
-        customInstruction: CUSTOM_INSTRUCTION // Menyisipkan instruksi pada kisi-kisi
+        customInstruction: CUSTOM_INSTRUCTION 
       }),
     });
     return dataKisi.kisiKisi;
