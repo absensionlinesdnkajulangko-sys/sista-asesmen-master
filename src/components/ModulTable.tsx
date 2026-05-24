@@ -1,4 +1,4 @@
-import { Download, ChevronLeft, FileText, DownloadCloud, ClipboardCheck, Key, Printer, RefreshCw, Trash2, ExternalLink } from 'lucide-react';
+import { Download, ChevronLeft, FileText, DownloadCloud, ClipboardCheck, Key, Printer, RefreshCw, Trash2, ExternalLink, Upload } from 'lucide-react';
 import { GeneratedSoal, SoalFormData } from '../types';
 import { NavItem } from './Sidebar';
 import { useRef, useState } from 'react';
@@ -17,6 +17,7 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
   const containerRef = useRef<HTMLDivElement>(null);
   const [showExportOptions, setShowExportOptions] = useState(false);
   const [activeTab, setActiveTab] = useState<'soal' | 'kunci' | 'kisi'>('soal');
+  
   const [generatedImages, setGeneratedImages] = useState<Record<number, string>>({});
   
   const [localQuestions, setLocalQuestions] = useState(data?.questions || []);
@@ -60,11 +61,44 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
     }
   };
 
-  // PERBAIKAN: Hanya mengambil esensi pertanyaan soal tanpa menyertakan kunci jawaban/opsi pilihan
+  const cleanOptionText = (text: string, index: number) => {
+    if (!text) return "";
+    const prefixTarget = `${String.fromCharCode(65 + index)}.`;
+    const trimmed = text.trim();
+    
+    if (trimmed.toUpperCase().startsWith(prefixTarget)) {
+      return trimmed.substring(prefixTarget.length).trim();
+    }
+    if (trimmed.toUpperCase().startsWith(String.fromCharCode(65 + index) + " ")) {
+      return trimmed.substring(2).trim();
+    }
+    return trimmed;
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, questionNumber: number) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Format file harus berupa gambar (PNG, JPG, JPEG, dll)');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        setGeneratedImages(prev => ({ 
+          ...prev, 
+          [questionNumber]: reader.result as string 
+        }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleChatGPTRedirect = async (questionObject: any) => {
     let basePrompt = questionObject.text || "";
     
-    // Pembersihan teks instruksi lembar ujian agar ChatGPT fokus pada objek visual yang diminta
     basePrompt = basePrompt
       .replace(/Murid melihat/gi, '')
       .replace(/Bapak\/Ibu Guru menunjukkan/gi, '')
@@ -76,18 +110,11 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
     
     try {
       await navigator.clipboard.writeText(fullPrompt);
-      alert("✅ PROMPT PERTANYAAN BERHASIL DISALIN!\n\nSISTA akan membuka ChatGPT. Silakan gunakan kombinasi tombol Ctrl+V (Paste) di kolom chat untuk memicu pembuatan gambar.");
+      alert("✅ PROMPT PERTANYAAN BERHASIL DISALIN!\n\nSISTA akan membuka ChatGPT. Silakan gunakan kombinasi tombol Ctrl+V (Paste) di kolom chat untuk memicu pembuatan gambar, lalu unduh gambar tersebut ke komputer Anda.");
       window.open('https://chatgpt.com/', '_blank');
     } catch (err) {
       alert("Gagal menyalin otomatis. Silakan salin teks prompt ini secara manual:\n\n" + fullPrompt);
       window.open('https://chatgpt.com/', '_blank');
-    }
-  };
-
-  const handlePasteImageUrl = (questionNumber: number) => {
-    const url = window.prompt("Tempel (Paste) URL Link gambar dari ChatGPT di sini untuk menampilkannya di lembar soal:");
-    if (url && url.trim() !== "") {
-      setGeneratedImages(prev => ({ ...prev, [questionNumber]: url.trim() }));
     }
   };
   
@@ -150,11 +177,11 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
 
         if (q.type === 'Pilihan Ganda' && q.options) {
           contentHtml += `<table class="options-table">`;
-          q.options.forEach((opt, i) => { contentHtml += `<tr><td width="20"><b>${String.fromCharCode(65 + i)}.</b></td><td>${opt}</td></tr>`; });
+          q.options.forEach((opt, i) => { contentHtml += `<tr><td width="20"><b>${String.fromCharCode(65 + i)}.</b></td><td>${cleanOptionText(opt, i)}</td></tr>`; });
           contentHtml += `</table>`;
         } else if (q.type === 'Pilihan Ganda Kompleks' && q.multiOptions) {
           contentHtml += `<table class="options-table">`;
-          q.multiOptions.forEach((opt) => { contentHtml += `<tr><td width="20">[ ]</td><td>${opt.text}</td></tr>`; });
+          q.multiOptions.forEach((opt) => { contentHtml += `<tr><td width="20">[ ]</td><td>${typeof opt === 'object' && opt !== null ? (opt.text || '') : opt}</td></tr>`; });
           contentHtml += `</table>`;
         } else if (q.type === 'Benar Salah') {
           contentHtml += `<div style="margin-left: 30pt;"> ( ) BENAR &nbsp;&nbsp;&nbsp; ( ) SALAH </div>`;
@@ -206,22 +233,17 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
     <div className="max-w-5xl mx-auto space-y-8 pb-32">
       <style dangerouslySetInnerHTML={{ __html: `
         @media print { 
-          .no-print, button, header, nav, aside, footer, .sticky { display: none !important; } 
+          .no-print, button, header, nav, aside, footer, .sticky, input[type="file"] { display: none !important; } 
           body, main, #root { background: white !important; padding: 0 !important; margin: 0 !important; width: 100% !important; } 
           .print-container { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; } 
           table, .spreadsheet-table { width: 100% !important; border-collapse: collapse !important; } 
           .spreadsheet-table th, .spreadsheet-table td { border: 1px solid #000000 !important; padding: 6px !important; font-size: 10pt !important; } 
           .print-only-header { display: block !important; } 
           .screen-only-header { display: none !important; } 
-          
-          /* KOTAK IDENTITAS LUAR */
           .print-identity-table { display: table !important; width: 100% !important; border: 1px solid #000 !important; border-collapse: collapse !important; font-size: 10pt !important; } 
           .print-identity-table > tbody > tr > td { border: 1px solid #000 !important; padding: 6px !important; width: 50% !important; vertical-align: top !important; } 
-          
-          /* TABEL DI DALAM TABEL */
           .inner-table { width: 100% !important; border: none !important; margin: 0 !important; }
           .inner-table tr td { border: none !important; padding: 2px 4px 2px 0 !important; vertical-align: top !important; }
-          
           .screen-identity-grid { display: none !important; } 
         } 
         .print-only-header, .print-identity-table { display: none; }
@@ -324,6 +346,19 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
             {localQuestions.map((q) => {
               const isAbove = q.text?.toLowerCase()?.includes('di atas') || false;    
               
+              // LOGIKA KONDISIONAL BARU: 
+              // Tombol aksi gambar hanya aktif jika AI menandai `imagePrompt` ATAU teks/stimulus mengandung unsur instruksi gambar.
+              const teksLengkap = `${q.text || ''} ${q.stimulus || ''}`.toLowerCase();
+              const butuhGambar = q.imagePrompt || 
+                                 teksLengkap.includes('perhatikan gambar') || 
+                                 teksLengkap.includes('amati gambar') ||
+                                 teksLengkap.includes('pada gambar di') ||
+                                 teksLengkap.includes('Perhatikan grafik') ||
+                                 teksLengkap.includes('amati grafik') ||
+                                 teksLengkap.includes('perhatikan grafik di') || 
+                                 teksLengkap.includes('disajikan gambar') ||
+                                 teksLengkap.includes('disajikan grafik');
+                                 
               return (
                 <div key={q.number} className="break-inside-avoid border-b border-slate-50 pb-6 space-y-4">
                   {q.stimulus && (
@@ -333,19 +368,22 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
                   )}
                   <div className="flex flex-col gap-4">
                     
-                    {q.imagePrompt && (
+                    {/* Menggunakan variabel deteksi dinamis 'butuhGambar' */}
+                    {butuhGambar && (
                       generatedImages[q.number] ? (
                         <div className={cn("relative group", isAbove ? "w-full max-w-2xl mx-auto" : "max-w-sm")}>
-                          <img src={generatedImages[q.number]} className="w-full h-auto rounded-xl border" referrerPolicy="no-referrer" />
+                          <img src={generatedImages[q.number]} className="w-full h-auto rounded-xl border" />
                           
                           <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity no-print bg-slate-900/60 backdrop-blur-sm p-1.5 rounded-xl">
-                            <button 
-                              onClick={() => handlePasteImageUrl(q.number)} 
-                              title="Ganti Gambar Baru"
-                              className="p-1.5 bg-white text-citrus-600 hover:bg-citrus-50 rounded-lg transition-colors"
-                            >
+                            <label className="p-1.5 bg-white text-citrus-600 hover:bg-citrus-50 rounded-lg transition-colors cursor-pointer" title="Ganti Gambar">
                               <RefreshCw className="w-4 h-4" />
-                            </button>
+                              <input 
+                                type="file" 
+                                accept="image/*" 
+                                className="hidden" 
+                                onChange={(e) => handleImageUpload(e, q.number)} 
+                              />
+                            </label>
                             <button 
                               onClick={() => handleRemoveImage(q.number)}
                               title="Hapus Gambar"
@@ -357,19 +395,23 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
                         </div>
                       ) : (
                         <div className="no-print flex gap-3 mt-2">
-  <button 
-    onClick={() => handleChatGPTRedirect(q)} 
-    className="gradient-citrus text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm hover:shadow-md transition-all"
-  >
-    <ExternalLink className="w-4 h-4" /> Buat Gambar di ChatGPT
-  </button>
-  <button 
-    onClick={() => handlePasteImageUrl(q.number)} 
-    className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all"
-  >
-    Tempel URL Gambar
-  </button>
-</div>
+                          <button 
+                            onClick={() => handleChatGPTRedirect(q)} 
+                            className="gradient-citrus text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm hover:shadow-md transition-all"
+                          >
+                            <ExternalLink className="w-4 h-4" /> Buat Gambar di ChatGPT
+                          </button>
+                          
+                          <label className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer">
+                            <Upload className="w-4 h-4 text-citrus-600" /> Unggah Gambar (Komputer)
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="hidden" 
+                              onChange={(e) => handleImageUpload(e, q.number)} 
+                            />
+                          </label>
+                        </div>
                       )
                     )}
 
@@ -385,7 +427,7 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
                         {q.options.map((opt, i) => (
                           <div key={i} className="flex gap-3 items-start">
                             <span className="font-bold text-slate-700 w-5">{String.fromCharCode(65 + i)}.</span>
-                            <span className="text-slate-800">{opt}</span>
+                            <span className="text-slate-800">{cleanOptionText(opt, i)}</span>
                           </div>
                         ))}
                       </div>
@@ -398,11 +440,15 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
                     )}
                     {q.type === 'Pilihan Ganda Kompleks' && q.multiOptions && (
                       <div className="grid grid-cols-1 gap-3 ml-2">
-                        {q.multiOptions.map((opt, i) => (
-                          <div key={i} className="flex gap-3 items-center">
-                            <div className="w-5 h-5 border-2 rounded" /><span className="text-slate-800">{opt.text}</span>
-                          </div>
-                        ))}
+                        {q.multiOptions.map((opt, i) => {
+                          const teksOpsi = typeof opt === 'object' && opt !== null ? (opt.text || '') : opt;
+                          return (
+                            <div key={i} className="flex gap-3 items-center">
+                              <div className="w-5 h-5 border-2 rounded border-slate-400 shrink-0" />
+                              <span className="text-slate-800 font-medium">{teksOpsi || `Pernyataan Pilihan ${i + 1}`}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                     {q.type === 'Menjodohkan' && q.matchingPairs && (
@@ -431,12 +477,9 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
               </thead>
               <tbody>
                 {localQuestions.map((q) => {
-                  // LOGIKA PEMISAHAN SKOR
                   const rawScore = (q as any).score || "";
                   const hasSplitter = rawScore.includes("ANALISIS SKOR:");
                   
-                  // Jika format API mengandung instruksi split kita, kita pisah. 
-                  // Jika tidak, tampilkan apa adanya di kolom Rubrik.
                   const pembahasan = hasSplitter ? rawScore.split("ANALISIS SKOR:")[0].replace("PEMBAHASAN MATERI:", "").trim() : null;
                   const analisis = hasSplitter ? rawScore.split("ANALISIS SKOR:")[1].trim() : rawScore;
 
@@ -445,13 +488,11 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
                       <td className="text-center font-bold font-mono vertical-align-top pt-4">{q.number}</td>
                       <td>
                         <div className="space-y-4 p-4">
-                          {/* 1. Baris Kunci Jawaban */}
                           <div className="flex items-start gap-2 border-b border-slate-100 pb-2">
                             <span className="text-xs font-bold bg-citrus-600 text-white px-2 py-0.5 rounded shrink-0 uppercase">Kunci</span>
                             <p className="font-bold text-citrus-900">{formatAnswerKey(q.answerKey)}</p>
                           </div>
                           
-                          {/* 2. Pembahasan Materi (Jika ada) */}
                           {pembahasan && (
                             <div className="space-y-1">
                               <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Pembahasan Materi:</p>
@@ -459,7 +500,6 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
                             </div>
                           )}
 
-                          {/* 3. Analisis Skor / Rubrik Penilaian */}
                           <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-2">
                             <p className="text-xs font-bold text-slate-700 uppercase tracking-wider border-b pb-1">
                               {pembahasan ? "Analisis Skor & Rubrik:" : "Rubrik Penilaian:"}
@@ -469,7 +509,6 @@ export default function ModulTable({ data, formInput, onBack, mode }: ModulTable
                             </pre>
                           </div>
                           
-                          {/* 4. Level Kognitif */}
                           <p className="text-[10px] text-citrus-600 font-bold uppercase mt-2">
                             Level Kognitif: {q.cognitiveLevel || 'MOTS'}
                           </p>
