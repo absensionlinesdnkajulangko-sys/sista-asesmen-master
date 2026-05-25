@@ -53,7 +53,7 @@ const safeParseJSON = (responseText: string) => {
 };
 
 // ===================================================================
-// 1. ENDPOINT: GENERATE LEMBAR SOAL UTAMA
+// 1. ENDPOINT: GENERATE LEMBAR SOAL UTAMA (FIXED COGNITIVE LEVEL)
 // ===================================================================
 app.post("/api/generate/soal", async (req, res) => {
   try {
@@ -70,17 +70,20 @@ app.post("/api/generate/soal", async (req, res) => {
     const sGrade = sanitizePromptString(data.grade);
     const sSemester = sanitizePromptString(data.semester);
     const sCp = sanitizePromptString(data.cp);
-    // PERBAIKAN: Tangkap variabel material dari frontend
     const sMaterial = sanitizePromptString(data.material); 
     const sInstruction = sanitizePromptString(customInstruction);
+    
+    // PERBAIKAN 1: Tangkap tingkat level kognitif yang dipilih oleh pengguna di form Frontend
+    const sCognitiveLevel = sanitizePromptString(data.cognitiveLevel || data.levelKognitif || "MOTS");
 
-    // PERBAIKAN: Masukkan sMaterial ke dalam Prompt utama dengan penekanan absolut
+    // PERBAIKAN 2: Injeksi parameter LEVEL KOGNITIF ke dalam Prompt Utama
     const prompt = `
       Bertindaklah sebagai Pakar Asesmen Kurikulum Merdeka tingkat Sekolah Dasar. 
       Tugas: Buat instrumen butir soal untuk mata pelajaran: ${sSubject || "Umum"}, Kelas ${sGrade || ""}.
       
       MATERI POKOK (WAJIB FOKUS 100% KE SINI): ${sMaterial || "Umum"}
       Capaian Pembelajaran (CP): ${sCp || ""}
+      LEVEL KOGNITIF TERPILIH (MUTLAK): ${sCognitiveLevel}
       
       Konfigurasi Soal: ${configs}
       Instruksi Tambahan khusus: ${sInstruction || ""}
@@ -88,7 +91,7 @@ app.post("/api/generate/soal", async (req, res) => {
       PENTING & WAJIB: 
       1. Jawab HANYA dengan JSON valid sesuai struktur di bawah. 
       2. PENTING: Jika di dalam teks soal, stimulus, atau pilihan ganda terdapat kata yang membutuhkan tanda kutip dua, Anda WAJIB mengubahnya menjadi kutip tunggal (') agar JSON tidak rusak.
-      3. Pastikan semua tanda kurung kurawal pembuka dan penutup seimbang dan tidak terputus.
+      3. ATURAN LEVEL KOGNITIF MUTLAK: Seluruh butir soal yang Anda rancang WAJIB memiliki bobot berpikir tingkat ${sCognitiveLevel}. DILARANG KERAS mencampurnya dengan level lain (misal jika diminta HOTS, jangan membuat soal tipe LOTS/MOTS)!
       4. Jika pertanyaan meminta atau membutuhkan gambar (mengandung instruksi seperti 'perhatikan gambar', 'amati gambar', 'pada gambar'), isi properti 'imagePrompt' dengan deskripsi bahasa Inggris yang mendetail untuk generator gambar. Jika tidak membutuhkan gambar, isi 'imagePrompt' dengan null.
 
       STRUKTUR JSON WAJIB:
@@ -109,7 +112,7 @@ app.post("/api/generate/soal", async (req, res) => {
             "options": ["Opsi A", "Opsi B", "Opsi C", "Opsi D"],
             "multiOptions": [],
             "imagePrompt": null,
-            "cognitiveLevel": "MOTS"
+            "cognitiveLevel": "${sCognitiveLevel}" 
           }
         ]
       }
@@ -142,7 +145,8 @@ app.post("/api/generate/soal", async (req, res) => {
           matchingPairs: q.matchingPairs || [],
           answerKey: q.answerKey || "",
           explanation: q.explanation || "",
-          cognitiveLevel: q.cognitiveLevel || "MOTS"
+          // Gunakan hasil AI atau kembalikan ke level terpilih jika AI meleset sedikit
+          cognitiveLevel: q.cognitiveLevel || sCognitiveLevel 
         };
       }),
       kisiKisi: []
