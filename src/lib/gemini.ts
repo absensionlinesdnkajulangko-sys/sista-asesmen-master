@@ -70,28 +70,27 @@ export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoa
   try {
     console.log("Memulai pembuatan soal utama...");
     
-    // 1. Ambil data material dari form dan pastikan berbentuk Array
+    // 1. Ambil data material dari form
     const materialArray = Array.isArray(data.material) ? data.material : [data.material];
-    
-    // 2. Bersihkan array dari kemungkinan input kosong
     const validMaterials = materialArray.filter((m: string) => m && m.trim() !== '');
     
-    // 3. Gabungkan dengan kata "DAN" untuk AI (agar AI tahu itu hal yang terpisah), 
-    //    dan gabungkan dengan koma untuk tabel frontend
     const materialForAI = validMaterials.join(' DAN ');
     const materialForHeader = validMaterials.join(', ');
 
-    // 4. LOGIKA DINAMIS PROMPT INJECTION
+    // 2. Logika Distribusi Materi
     let materialInstruction = "";
     if (validMaterials.length > 1) {
-      materialInstruction = `[FOKUS MUTLAK: PENGGUNA MEMASUKKAN ${validMaterials.length} MATERI POKOK BERBEDA YAITU: ${materialForAI}. ANDA WAJIB MEMBAGI JUMLAH SOAL SECARA PROPORSIONAL UNTUK MENGUJI KESEMUA MATERI TERSEBUT. JANGAN ADA MATERI YANG TERLEWAT!]`;
+      materialInstruction = `[FOKUS MUTLAK: PENGGUNA MEMASUKKAN ${validMaterials.length} MATERI POKOK YAITU: ${materialForAI}. BAGI SOAL SECARA PROPORSIONAL UNTUK SEMUA MATERI INI!]`;
     } else {
-      materialInstruction = `[FOKUS 100%: SELURUH SOAL YANG DIBUAT WAJIB, MUTLAK, DAN HANYA MEMBAHAS MATERI INI SAJA] -> ${materialForAI}`;
+      materialInstruction = `[FOKUS 100% MUTLAK: SELURUH SOAL YANG DIBUAT HANYA BOLEH MEMBAHAS TENTANG: ${materialForAI}. JANGAN MEMBAHAS TOPIK LAIN!]`;
     }
 
+    // 3. TRICK PAMUNGKAS (DATA STARVATION)
+    // Kita "potong" teks CP asli sebelum dikirim ke AI agar AI tidak membaca kata 'kebersihan/akhlak' dll.
     const payload = {
       ...data,
-      cp: `[PERINGATAN MUTLAK: TEKS CAPAIAN PEMBELAJARAN DI BAWAH INI HANYA UNTUK REFERENSI TINGKAT KESULITAN/LEVEL KELAS. DILARANG KERAS MENGAMBIL TOPIK ATAU MEMBUAT SOAL DARI TEKS INI!] -> ${data.cp}`,
+      // GANTI TEKS CP DENGAN INSTRUKSI KOSONG:
+      cp: "TEKS CP DISENGAJA UNTUK DIHAPUS SEMENTARA AGAR ANDA (AI) TIDAK TERDISTRAKSI. ANDA HANYA BOLEH FOKUS PADA MATERI POKOK SAJA.",
       material: materialInstruction,
       customInstruction: CUSTOM_INSTRUCTION
     };
@@ -105,7 +104,7 @@ export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoa
     return {
       header: {
         ...dataSoal.header,
-        material: materialForHeader // Kembalikan format ke koma agar rapi saat dicetak di tabel
+        material: materialForHeader // Format koma untuk tabel frontend
       },
       questions: dataSoal.questions.map((q: any) => ({
         ...q,
