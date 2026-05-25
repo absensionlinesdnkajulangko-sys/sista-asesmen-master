@@ -70,12 +70,18 @@ app.post("/api/generate/soal", async (req, res) => {
     const sGrade = sanitizePromptString(data.grade);
     const sSemester = sanitizePromptString(data.semester);
     const sCp = sanitizePromptString(data.cp);
+    // PERBAIKAN: Tangkap variabel material dari frontend
+    const sMaterial = sanitizePromptString(data.material); 
     const sInstruction = sanitizePromptString(customInstruction);
 
+    // PERBAIKAN: Masukkan sMaterial ke dalam Prompt utama dengan penekanan absolut
     const prompt = `
       Bertindaklah sebagai Pakar Asesmen Kurikulum Merdeka tingkat Sekolah Dasar. 
       Tugas: Buat instrumen butir soal untuk mata pelajaran: ${sSubject || "Umum"}, Kelas ${sGrade || ""}.
-      Capaian Pembelajaran (CP): ${sCp || ""}.
+      
+      MATERI POKOK (WAJIB FOKUS 100% KE SINI): ${sMaterial || "Umum"}
+      Capaian Pembelajaran (CP): ${sCp || ""}
+      
       Konfigurasi Soal: ${configs}
       Instruksi Tambahan khusus: ${sInstruction || ""}
       
