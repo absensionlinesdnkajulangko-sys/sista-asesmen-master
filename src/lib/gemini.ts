@@ -37,8 +37,11 @@ async function fetchSecureWithRetry(url: string, options: any, retries = 3, back
   }
 }
 
-// PERBAIKAN UTAMA: Memperketat instruksi pembuatan soal Pilihan Ganda Kompleks (PGK) agar array teks pernyataan tidak kosong
+// PERBAIKAN UTAMA: Menambahkan aturan ketat untuk ruang lingkup materi pokok
 const CUSTOM_INSTRUCTION = `PENTING: Gunakan selalu kata 'murid' untuk merujuk pada anak didik. Jangan pernah menggunakan istilah 'peserta didik' di dalam teks output yang Anda hasilkan.
+
+STRICT RULE - BATASAN MATERI (MATERI POKOK):
+Anda WAJIB menyusun soal HANYA berdasarkan "Materi Pokok" (material) dan "Capaian Pembelajaran" (cp) yang diinputkan. DILARANG KERAS memperluas, menyimpang, atau menambahkan materi pokok lain di luar dari yang sudah ditentukan. Fokus 100% pada ruang lingkup materi yang diminta oleh form!
 
 STRICT RULE - ATURAN PEMBUATAN SOAL PILIHAN GANDA KOMPLEKS (PGK):
 Khusus untuk soal dengan tipe "Pilihan Ganda Kompleks", Anda WAJIB mengisi properti 'multiOptions' dengan minimal 4 atau 5 kalimat pernyataan mandiri yang tekstual dan kontekstual materi terkait (Contoh format: ["Pernyataan konsep A benar", "Pernyataan analisis B salah", "Pernyataan C", "Pernyataan D"]). 
