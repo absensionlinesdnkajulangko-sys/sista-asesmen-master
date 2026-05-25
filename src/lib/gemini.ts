@@ -36,7 +36,7 @@ async function fetchSecureWithRetry(url: string, options: any, retries = 3, back
   }
 }
 
-// PERBAIKAN CUSTOM INSTRUCTION: Menambahkan aturan distribusi proporsional jika ada lebih dari 1 materi
+// PERBAIKAN CUSTOM INSTRUCTION (BASE)
 const CUSTOM_INSTRUCTION = `PENTING: Gunakan selalu kata 'murid' untuk merujuk pada anak didik. Jangan pernah menggunakan istilah 'peserta didik'.
 
 STRICT RULE - BATASAN MATERI MUTLAK (MATERI POKOK VS CP):
@@ -77,9 +77,18 @@ export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoa
     const materialForAI = validMaterials.join(' DAN ');
     const materialForHeader = validMaterials.join(', ');
 
-    // 2. INJEKSI PROMPT SUPER KETAT PADA PAYLOAD (SUBJECT, CP, MATERIAL)
+    // 2. TANGKAP LEVEL KOGNITIF DARI FORM (Jika kosong, default ke MOTS)
+    const selectedLevel = data.cognitiveLevel || (data as any).levelKognitif || "MOTS";
+
+    // 3. TAMBAHKAN ATURAN LEVEL KOGNITIF MUTLAK KE DALAM INSTRUKSI
+    const strictCognitiveRule = `\n\nSTRICT RULE - LEVEL KOGNITIF MUTLAK:\nPengguna HANYA meminta level kognitif: ${selectedLevel}. SELURUH (100%) soal yang dibuat WAJIB berada di level ${selectedLevel}. DILARANG KERAS membuat soal dengan level di luar ${selectedLevel} (Jangan dicampur)!`;
+
+    // 4. INJEKSI PROMPT SUPER KETAT PADA PAYLOAD
     const payload = {
       ...data,
+      // Pastikan level kognitif ikut terkirim ke backend
+      cognitiveLevel: selectedLevel, 
+      
       // BAJAK SUBJECT: Kita tipu AI agar mengira nama mata pelajarannya adalah materi itu sendiri
       subject: `KONSENTRASI KHUSUS: ${materialForAI}`,
       
@@ -89,7 +98,8 @@ export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoa
       // KUNCI MATERI: Berikan peringatan ancaman spesifik
       material: `[WARNING MATERI MUTLAK: 100% SOAL WAJIB HANYA MEMBAHAS TENTANG [${materialForAI}]. DILARANG KERAS MEMBUAT SOAL TENTANG RUKUN ISLAM, SYAHADAT, ATAU TOPIK LAINNYA!]`,
       
-      customInstruction: CUSTOM_INSTRUCTION
+      // Gabungkan instruksi dasar dengan ancaman level kognitif
+      customInstruction: CUSTOM_INSTRUCTION + strictCognitiveRule 
     };
 
     const dataSoal = await fetchSecureWithRetry('/api/generate/soal', {
@@ -101,7 +111,7 @@ export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoa
     return {
       header: {
         ...dataSoal.header,
-        // KEMBALIKAN KE TEKS ASLI: Agar di tabel/print out tetap tertulis "PAIBP", bukan teks bajakan kita
+        // KEMBALIKAN KE TEKS ASLI
         subject: data.subject, 
         material: materialForHeader 
       },
@@ -109,7 +119,9 @@ export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoa
         ...q,
         imagePrompt: q.imagePrompt || null,
         options: q.options || [],
-        multiOptions: q.multiOptions || [] 
+        multiOptions: q.multiOptions || [],
+        // Jaring Pengaman Akhir: Paksa output frontend sesuai pilihan jika AI masih sedikit meleset
+        cognitiveLevel: q.cognitiveLevel || selectedLevel 
       })),
       kisiKisi: []
     };
@@ -118,6 +130,7 @@ export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoa
     throw error;
   }
 }
+
 // 2. GENERATE KUNCI JAWABAN & RUBRIK
 export async function generateKunciOnly(header: any, questions: any[]): Promise<any[]> {
   try {
@@ -127,7 +140,7 @@ export async function generateKunciOnly(header: any, questions: any[]): Promise<
       body: JSON.stringify({ 
         header, 
         questions,
-        customInstruction: CUSTOM_INSTRUCTION
+        customInstruction: CUSTOM_INSTRUCTION // Kunci jawaban tidak butuh pengulangan level kognitif
       }),
     });
     
@@ -144,13 +157,16 @@ export async function generateKunciOnly(header: any, questions: any[]): Promise<
 // 3. GENERATE KISI-KISI
 export async function generateKisiOnly(formInput: SoalFormData, questions: any[]): Promise<any[]> {
   try {
+    const selectedLevel = formInput.cognitiveLevel || (formInput as any).levelKognitif || "MOTS";
+    const strictCognitiveRule = `\n\nSTRICT RULE - LEVEL KOGNITIF:\nKisi-kisi WAJIB selaras dengan soal. Semua indikator soal harus mencerminkan level kognitif ${selectedLevel}.`;
+
     const dataKisi = await fetchSecureWithRetry('/api/generate/kisi-kisi', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         formInput, 
         questions,
-        customInstruction: CUSTOM_INSTRUCTION 
+        customInstruction: CUSTOM_INSTRUCTION + strictCognitiveRule 
       }),
     });
     return dataKisi.kisiKisi;
