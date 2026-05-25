@@ -36,12 +36,12 @@ async function fetchSecureWithRetry(url: string, options: any, retries = 3, back
   }
 }
 
-// PERBAIKAN: Instruksi diperketat untuk memisahkan fungsi CP dan Materi Pokok
+// PERBAIKAN CUSTOM INSTRUCTION: Menambahkan aturan distribusi proporsional jika ada lebih dari 1 materi
 const CUSTOM_INSTRUCTION = `PENTING: Gunakan selalu kata 'murid' untuk merujuk pada anak didik. Jangan pernah menggunakan istilah 'peserta didik'.
 
 STRICT RULE - BATASAN MATERI MUTLAK (MATERI POKOK VS CP):
 1. Teks "Capaian Pembelajaran" (cp) HANYA berfungsi sebagai payung konteks kurikulum. DILARANG KERAS mengambil atau merancang soal dari topik yang ada di dalam teks CP JIKA topik tersebut tidak ditulis secara eksplisit di dalam "Materi Pokok" (material).
-2. FOKUS 100%: JIKA pengguna hanya menginputkan "Materi Pokok" berupa "Huruf Hijaiyah", maka 100% soal WAJIB HANYA membahas Huruf Hijaiyah. Jangan pernah melebar ke materi lain (seperti Surah Al-Fatihah, Hadis, dll) meskipun hal tersebut tercantum di dalam teks CP!
+2. DISTRIBUSI MATERI POKOK: Perhatikan dengan saksama kolom input "Materi Pokok". Jika terdapat lebih dari 1 materi pokok, Anda WAJIB membagi jumlah soal secara proporsional untuk mencakup SELURUH materi tersebut. Jangan hanya fokus pada materi pertama!
 3. HEADER MATERI POKOK: Dilarang keras memodifikasi, merangkum, atau menambahkan materi pokok lain ke dalam output data 'header'. Output 'material' pada header harus PERSIS sama dengan input pengguna.
 
 STRICT RULE - ATURAN PEMBUATAN SOAL PILIHAN GANDA KOMPLEKS (PGK):
@@ -70,22 +70,29 @@ export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoa
   try {
     console.log("Memulai pembuatan soal utama...");
     
-    // Pastikan material menjadi string yang terbaca jelas
-    const materialText = Array.isArray(data.material) 
-      ? data.material.join(', ') 
-      : data.material;
+    // 1. Ambil data material dari form dan pastikan berbentuk Array
+    const materialArray = Array.isArray(data.material) ? data.material : [data.material];
+    
+    // 2. Bersihkan array dari kemungkinan input kosong
+    const validMaterials = materialArray.filter((m: string) => m && m.trim() !== '');
+    
+    // 3. Gabungkan dengan kata "DAN" untuk AI (agar AI tahu itu hal yang terpisah), 
+    //    dan gabungkan dengan koma untuk tabel frontend
+    const materialForAI = validMaterials.join(' DAN ');
+    const materialForHeader = validMaterials.join(', ');
 
-    // TRICK MANIPULASI AI (PROMPT INJECTION): 
-    // Kita bungkus variabel asli dari form dengan instruksi ancaman bersyarat
-    // agar AI tidak berani mengambil materi dari CP.
+    // 4. LOGIKA DINAMIS PROMPT INJECTION
+    let materialInstruction = "";
+    if (validMaterials.length > 1) {
+      materialInstruction = `[FOKUS MUTLAK: PENGGUNA MEMASUKKAN ${validMaterials.length} MATERI POKOK BERBEDA YAITU: ${materialForAI}. ANDA WAJIB MEMBAGI JUMLAH SOAL SECARA PROPORSIONAL UNTUK MENGUJI KESEMUA MATERI TERSEBUT. JANGAN ADA MATERI YANG TERLEWAT!]`;
+    } else {
+      materialInstruction = `[FOKUS 100%: SELURUH SOAL YANG DIBUAT WAJIB, MUTLAK, DAN HANYA MEMBAHAS MATERI INI SAJA] -> ${materialForAI}`;
+    }
+
     const payload = {
       ...data,
-      // Kita "pagari" teks CP agar AI tahu ini BUKAN bahan soal
       cp: `[PERINGATAN MUTLAK: TEKS CAPAIAN PEMBELAJARAN DI BAWAH INI HANYA UNTUK REFERENSI TINGKAT KESULITAN/LEVEL KELAS. DILARANG KERAS MENGAMBIL TOPIK ATAU MEMBUAT SOAL DARI TEKS INI!] -> ${data.cp}`,
-      
-      // Kita "perkuat" teks Materi Pokok agar menjadi satu-satunya fokus AI
-      material: `[FOKUS 100%: SELURUH SOAL YANG DIBUAT WAJIB, MUTLAK, DAN HANYA MEMBAHAS MATERI INI SAJA] -> ${materialText}`,
-      
+      material: materialInstruction,
       customInstruction: CUSTOM_INSTRUCTION
     };
 
@@ -98,7 +105,7 @@ export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoa
     return {
       header: {
         ...dataSoal.header,
-        material: materialText // Menggunakan teks asli yang diketik guru
+        material: materialForHeader // Kembalikan format ke koma agar rapi saat dicetak di tabel
       },
       questions: dataSoal.questions.map((q: any) => ({
         ...q,
@@ -113,7 +120,6 @@ export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoa
     throw error;
   }
 }
-
 // 2. GENERATE KUNCI JAWABAN & RUBRIK
 export async function generateKunciOnly(header: any, questions: any[]): Promise<any[]> {
   try {
