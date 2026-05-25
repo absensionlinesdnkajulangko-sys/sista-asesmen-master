@@ -70,8 +70,22 @@ export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoa
   try {
     console.log("Memulai pembuatan soal utama...");
     
+    // Pastikan material menjadi string yang terbaca jelas
+    const materialText = Array.isArray(data.material) 
+      ? data.material.join(', ') 
+      : data.material;
+
+    // TRICK MANIPULASI AI (PROMPT INJECTION): 
+    // Kita bungkus variabel asli dari form dengan instruksi ancaman bersyarat
+    // agar AI tidak berani mengambil materi dari CP.
     const payload = {
       ...data,
+      // Kita "pagari" teks CP agar AI tahu ini BUKAN bahan soal
+      cp: `[PERINGATAN MUTLAK: TEKS CAPAIAN PEMBELAJARAN DI BAWAH INI HANYA UNTUK REFERENSI TINGKAT KESULITAN/LEVEL KELAS. DILARANG KERAS MENGAMBIL TOPIK ATAU MEMBUAT SOAL DARI TEKS INI!] -> ${data.cp}`,
+      
+      // Kita "perkuat" teks Materi Pokok agar menjadi satu-satunya fokus AI
+      material: `[FOKUS 100%: SELURUH SOAL YANG DIBUAT WAJIB, MUTLAK, DAN HANYA MEMBAHAS MATERI INI SAJA] -> ${materialText}`,
+      
       customInstruction: CUSTOM_INSTRUCTION
     };
 
@@ -82,10 +96,9 @@ export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoa
     });
 
     return {
-      // PERBAIKAN MUTLAK: Kita "membajak" properti material dari header agar AI tidak bisa memodifikasinya
       header: {
         ...dataSoal.header,
-        material: data.material.join(', ') // Menggunakan 100% teks asli yang diketik guru di form
+        material: materialText // Menggunakan teks asli yang diketik guru
       },
       questions: dataSoal.questions.map((q: any) => ({
         ...q,
