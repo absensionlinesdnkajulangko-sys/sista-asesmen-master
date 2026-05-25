@@ -77,21 +77,18 @@ export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoa
     const materialForAI = validMaterials.join(' DAN ');
     const materialForHeader = validMaterials.join(', ');
 
-    // 2. Logika Distribusi Materi
-    let materialInstruction = "";
-    if (validMaterials.length > 1) {
-      materialInstruction = `[FOKUS MUTLAK: PENGGUNA MEMASUKKAN ${validMaterials.length} MATERI POKOK YAITU: ${materialForAI}. BAGI SOAL SECARA PROPORSIONAL UNTUK SEMUA MATERI INI!]`;
-    } else {
-      materialInstruction = `[FOKUS 100% MUTLAK: SELURUH SOAL YANG DIBUAT HANYA BOLEH MEMBAHAS TENTANG: ${materialForAI}. JANGAN MEMBAHAS TOPIK LAIN!]`;
-    }
-
-    // 3. TRICK PAMUNGKAS (DATA STARVATION)
-    // Kita "potong" teks CP asli sebelum dikirim ke AI agar AI tidak membaca kata 'kebersihan/akhlak' dll.
+    // 2. INJEKSI PROMPT SUPER KETAT PADA PAYLOAD (SUBJECT, CP, MATERIAL)
     const payload = {
       ...data,
-      // GANTI TEKS CP DENGAN INSTRUKSI KOSONG:
-      cp: "TEKS CP DISENGAJA UNTUK DIHAPUS SEMENTARA AGAR ANDA (AI) TIDAK TERDISTRAKSI. ANDA HANYA BOLEH FOKUS PADA MATERI POKOK SAJA.",
-      material: materialInstruction,
+      // BAJAK SUBJECT: Kita tipu AI agar mengira nama mata pelajarannya adalah materi itu sendiri
+      subject: `KONSENTRASI KHUSUS: ${materialForAI}`,
+      
+      // KOSONGKAN CP: Jangan biarkan AI membaca referensi luar
+      cp: "KOSONG. DILARANG MEMBUAT SOAL BERDASARKAN PENGETAHUAN UMUM.",
+      
+      // KUNCI MATERI: Berikan peringatan ancaman spesifik
+      material: `[WARNING MATERI MUTLAK: 100% SOAL WAJIB HANYA MEMBAHAS TENTANG [${materialForAI}]. DILARANG KERAS MEMBUAT SOAL TENTANG RUKUN ISLAM, SYAHADAT, ATAU TOPIK LAINNYA!]`,
+      
       customInstruction: CUSTOM_INSTRUCTION
     };
 
@@ -104,7 +101,9 @@ export async function generateSoalOnly(data: SoalFormData): Promise<GeneratedSoa
     return {
       header: {
         ...dataSoal.header,
-        material: materialForHeader // Format koma untuk tabel frontend
+        // KEMBALIKAN KE TEKS ASLI: Agar di tabel/print out tetap tertulis "PAIBP", bukan teks bajakan kita
+        subject: data.subject, 
+        material: materialForHeader 
       },
       questions: dataSoal.questions.map((q: any) => ({
         ...q,
