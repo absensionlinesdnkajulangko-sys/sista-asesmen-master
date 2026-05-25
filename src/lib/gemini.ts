@@ -45,11 +45,11 @@ STRICT RULE - BATASAN MATERI MUTLAK (MATERI POKOK VS CP):
 3. HEADER MATERI POKOK: Dilarang keras memodifikasi, merangkum, atau menambahkan materi pokok lain ke dalam output data 'header'. Output 'material' pada header harus PERSIS sama dengan input pengguna.
 
 STRICT RULE - ATURAN PEMBUATAN SOAL PILIHAN GANDA KOMPLEKS (PGK):
-Khusus untuk soal tipe "Pilihan Ganda Kompleks", Anda WAJIB mengisi properti 'multiOptions' dengan minimal 4 atau 5 kalimat pernyataan mandiri (Contoh: ["Pernyataan A benar", "Pernyataan B salah", "Pernyataan C", "Pernyataan D"]). 
+Khusus untuk soal tipe "Pilihan Ganda Kompleks", Anda WAJIB mengisi properti 'multiOptions' dengan minimal 3 atau 4 kalimat pernyataan mandiri (Contoh: ["Pernyataan A benar", "Pernyataan B salah", "Pernyataan C", "Pernyataan D"]). 
 DILARANG KERAS membiarkan 'multiOptions' kosong ([]) jika tipe soal Pilihan Ganda Kompleks!
 
 STRICT RULE - PEMILIHAN STIMULUS VISUAL OTOMATIS SECARA ACAK:
-1. Berikan peluang 30%-40% bagi sebuah soal untuk memiliki stimulus visual (butuh gambar).
+1. Berikan peluang 20%-30% bagi sebuah soal untuk memiliki stimulus visual (butuh gambar).
 2. JIKA ADA GAMBAR: Tambahkan properti 'imagePrompt' berisi deskripsi visual yang sangat spesifik dalam BAHASA INGGRIS (contoh: "A clear mathematical diagram of a cube").
 3. JIKA TANPA GAMBAR: Jangan tambahkan 'imagePrompt' atau isi dengan null/string kosong.
 
